@@ -9,7 +9,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 // ---------------------------------------------------------------------------
 // Enums
 // ---------------------------------------------------------------------------
@@ -72,19 +71,24 @@ enum AddressLabel {
 
 /// حساب ورود (ایمیل/رمز یا OAuth در آینده)
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String?
-  phone        String?   @unique
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  phone        String?  @unique
+  role         UserRole @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   customer Customer?
   admin    Admin?
 
   @@index([isActive])
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
 }
 
 /// پروفایل خریدار — هر کاربر فروشگاه یک Customer

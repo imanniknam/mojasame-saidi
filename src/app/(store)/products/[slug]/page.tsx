@@ -3,29 +3,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProductCard } from "@/components/store/product-card";
+import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { formatPriceFa } from "@/lib/format";
 import { IMAGE_SIZES } from "@/lib/images";
 import {
-  getProductBySlug,
-  getRelatedProducts,
-  storeProducts,
-} from "@/lib/storefront/mock-data";
+  getRelatedStoreProducts,
+  getStoreProductBySlug,
+  listProductSlugs,
+} from "@/lib/storefront/queries";
 import { buildProductJsonLd, buildProductMetadata } from "@/lib/seo/metadata";
 
 type ProductPageProps = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return storeProducts.map((product) => ({ slug: product.slug }));
+export async function generateStaticParams() {
+  const slugs = await listProductSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: ProductPageProps): Metadata {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getStoreProductBySlug(slug);
   if (!product) {
     return {
       title: "محصول پیدا نشد",
@@ -35,11 +37,12 @@ export function generateMetadata({ params }: ProductPageProps): Metadata {
   return buildProductMetadata(product);
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug } = await params;
+  const product = await getStoreProductBySlug(slug);
   if (!product) notFound();
 
-  const related = getRelatedProducts(product);
+  const related = await getRelatedStoreProducts(product);
   const hasDiscount =
     product.compareAtMinor != null && product.compareAtMinor > product.priceMinor;
 
@@ -87,9 +90,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                 ) : null}
               </div>
               <h1 className="ds-display text-3xl">{product.titleFa}</h1>
-              <p className="ds-body text-muted-foreground">
-                {product.descriptionFa}
-              </p>
+              <p className="ds-body text-muted-foreground">{product.descriptionFa}</p>
             </div>
 
             <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-elegant">
@@ -106,30 +107,31 @@ export default function ProductPage({ params }: ProductPageProps) {
                   </p>
                 ) : null}
               </div>
-              <Button
-                variant="luxury"
-                size="touch"
-                className="mt-4 w-full"
-                asChild
-              >
-                <Link href="/cart">مشاهده سبد خرید</Link>
-              </Button>
+              <AddToCartButton
+                productId={product.id}
+                titleFa={product.titleFa}
+                priceMinor={product.priceMinor}
+                imageUrl={product.imageUrl}
+                inStock={product.inStock}
+              />
             </div>
 
-            <section className="space-y-3">
-              <h2 className="ds-title text-xl">مشخصات محصول</h2>
-              <dl className="grid gap-2">
-                {product.specs.map((spec) => (
-                  <div
-                    key={spec.labelFa}
-                    className="flex justify-between gap-4 rounded-xl bg-muted/35 px-4 py-3 text-sm"
-                  >
-                    <dt className="text-muted-foreground">{spec.labelFa}</dt>
-                    <dd className="font-semibold">{spec.valueFa}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
+            {product.specs.length ? (
+              <section className="space-y-3">
+                <h2 className="ds-title text-xl">مشخصات محصول</h2>
+                <dl className="grid gap-2">
+                  {product.specs.map((spec) => (
+                    <div
+                      key={spec.labelFa}
+                      className="flex justify-between gap-4 rounded-xl bg-muted/35 px-4 py-3 text-sm"
+                    >
+                      <dt className="text-muted-foreground">{spec.labelFa}</dt>
+                      <dd className="font-semibold">{spec.valueFa}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : null}
           </div>
         </section>
 

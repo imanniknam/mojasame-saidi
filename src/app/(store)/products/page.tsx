@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/store/product-card";
 import { formatPriceFa } from "@/lib/format";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { storeProducts } from "@/lib/storefront/mock-data";
+import { listStoreProducts } from "@/lib/storefront/queries";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "همه محصولات",
@@ -11,7 +11,9 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/products",
 });
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const storeProducts = await listStoreProducts();
+
   return (
     <main className="ds-section mx-auto max-w-6xl space-y-6 pb-28">
       <header className="space-y-2 text-start">

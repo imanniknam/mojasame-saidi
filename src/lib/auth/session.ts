@@ -17,15 +17,10 @@ export {
 };
 export type { SessionUser };
 
-export async function getSessionUserFromRequest(request: Request | NextRequest) {
-  const cookie = request.headers
-    .get("cookie")
-    ?.split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`));
-
-  const token = cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : null;
-  return verifySessionToken(token);
+export async function getSessionUserFromRequest(_request?: Request | NextRequest) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  return verifySessionToken(cookieStore.get(SESSION_COOKIE_NAME)?.value);
 }
 
 export async function getSessionUser() {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CategoryCard } from "@/components/store/category-card";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { storeCategories } from "@/lib/storefront/mock-data";
+import { listStoreCategories } from "@/lib/storefront/queries";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "دسته‌بندی محصولات",
@@ -10,7 +10,9 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/categories",
 });
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const storeCategories = await listStoreCategories();
+
   return (
     <main className="ds-section mx-auto max-w-6xl space-y-6 pb-28">
       <header className="space-y-2 text-start">

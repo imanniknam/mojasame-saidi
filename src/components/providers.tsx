@@ -2,7 +2,9 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import type { NavUser } from "@/components/layout/site-header";
 import { NavigationProvider } from "@/components/layout/navigation-context";
+import { SessionProvider } from "@/components/session/session-provider";
 
 const SearchNavDialog = dynamic(
   () =>
@@ -17,12 +19,20 @@ const Toaster = dynamic(
   { ssr: false },
 );
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  initialSessionUser = null,
+}: {
+  children: ReactNode;
+  initialSessionUser?: NavUser | null;
+}) {
   return (
-    <NavigationProvider>
-      {children}
-      <SearchNavDialog />
-      <Toaster closeButton />
-    </NavigationProvider>
+    <SessionProvider initialUser={initialSessionUser}>
+      <NavigationProvider>
+        {children}
+        <SearchNavDialog />
+        <Toaster closeButton />
+      </NavigationProvider>
+    </SessionProvider>
   );
 }

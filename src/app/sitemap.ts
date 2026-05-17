@@ -1,9 +1,13 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo/metadata";
-import { storeCategories, storeProducts } from "@/lib/storefront/mock-data";
+import { listStoreCategories, listStoreProducts } from "@/lib/storefront/queries";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const [storeCategories, storeProducts] = await Promise.all([
+    listStoreCategories(),
+    listStoreProducts(),
+  ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

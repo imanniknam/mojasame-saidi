@@ -19,14 +19,25 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { readAuthResponse } from "@/lib/auth/client";
+import { useSession, notifySessionChanged } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 
 type SignupPanelProps = {
   className?: string;
 };
 
+type SignupSuccessPayload = {
+  redirectTo?: string;
+  user?: {
+    displayName: string;
+    email: string;
+    role: "CUSTOMER";
+  };
+};
+
 export function SignupPanel({ className }: SignupPanelProps) {
   const router = useRouter();
+  const { setUser, refresh } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -67,14 +78,28 @@ export function SignupPanel({ className }: SignupPanelProps) {
         }),
       });
 
-      const result = await readAuthResponse<{ redirectTo?: string }>(response);
+      const result = await readAuthResponse<SignupSuccessPayload>(response);
 
       if (!response.ok || !result.ok) {
-        setError(result.error?.message ?? "ثبت‌نام با خطا روبه‌رو شد.");
+        setError(
+          !result.ok && result.error?.message
+            ? result.error.message
+            : "ثبت‌نام با خطا روبه‌رو شد.",
+        );
         return;
       }
 
+      if ("user" in result && result.user) {
+        setUser({
+          name: result.user.displayName,
+          email: result.user.email,
+          role: result.user.role,
+        });
+      }
+
       setMessage("حساب شما ساخته شد. در حال انتقال...");
+      notifySessionChanged();
+      await refresh();
       router.replace(result.redirectTo ?? "/");
       router.refresh();
     } catch {

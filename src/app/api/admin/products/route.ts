@@ -2,7 +2,8 @@ import { Prisma } from "@prisma/client";
 import { requireActiveAdmin } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, jsonNoStore } from "@/lib/server/api-response";
-import { catalogListQuerySchema, productCreateSchema } from "@/lib/validations/catalog";
+import { buildProductListWhere } from "@/lib/admin/products/queries";
+import { adminProductListSchema, productCreateSchema } from "@/lib/validations/catalog";
 
 const productInclude = {
   category: true,
@@ -14,19 +15,10 @@ export async function GET(request: Request) {
   try {
     await requireActiveAdmin(request);
     const url = new URL(request.url);
-    const query = catalogListQuerySchema.parse(Object.fromEntries(url.searchParams));
-    const where: Prisma.ProductWhereInput = {
-      ...(query.includeInactive ? {} : { isActive: true }),
-      ...(query.q
-        ? {
-            OR: [
-              { titleFa: { contains: query.q, mode: "insensitive" } },
-              { slug: { contains: query.q, mode: "insensitive" } },
-              { sku: { contains: query.q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    };
+    const entries = Object.fromEntries(url.searchParams);
+    if (entries.includeInactive === "true") entries.status = entries.status ?? "all";
+    const query = adminProductListSchema.parse(entries);
+    const where = buildProductListWhere(query);
 
     const [items, total] = await Promise.all([
       prisma.product.findMany({

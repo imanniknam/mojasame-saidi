@@ -63,14 +63,25 @@ const items: Item[] = [
   },
 ];
 
+function CartCountBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  const text = count > 99 ? "۹۹+" : count.toLocaleString("fa-IR");
+  return (
+    <span className="absolute -end-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-highlight px-1 text-[10px] font-bold leading-none text-highlight-foreground">
+      {text}
+    </span>
+  );
+}
+
 export type MobileBottomNavProps = {
+  cartCount?: number;
   className?: string;
 };
 
 /**
  * نوار پایین موبایل — RTL، safe-area، جستجو مودال، انیمیشن Framer Motion
  */
-export function MobileBottomNav({ className }: MobileBottomNavProps) {
+export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavProps) {
   const pathname = usePathname();
   const navCtx = useOptionalNavigation();
 
@@ -99,6 +110,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                   )}
                   aria-hidden
                 />
+                {item.id === "cart" ? <CartCountBadge count={cartCount} /> : null}
                 <span
                   className={cn(
                     "mt-1 h-1 w-6 rounded-full transition-colors",

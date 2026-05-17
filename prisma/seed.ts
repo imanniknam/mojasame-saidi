@@ -107,12 +107,13 @@ async function main() {
       email: "admin@mojasamesaidi.ir",
       passwordHash: password,
       phone: "09120000000",
+      role: "ADMIN",
       isActive: true,
       admin: {
         create: { displayName: "مدیر سیستم", isSuperAdmin: true },
       },
     },
-    update: { passwordHash: password, isActive: true },
+    update: { passwordHash: password, role: "ADMIN", isActive: true },
     include: { admin: true },
   });
 
@@ -128,12 +129,13 @@ async function main() {
       email: "customer@mojasamesaidi.ir",
       passwordHash: password,
       phone: "09121111111",
+      role: "CUSTOMER",
       isActive: true,
       customer: {
         create: { firstName: "نمونه", lastName: "خریدار", displayFa: "خریدار نمونه" },
       },
     },
-    update: { passwordHash: password, isActive: true },
+    update: { passwordHash: password, role: "CUSTOMER", isActive: true },
     include: { customer: true },
   });
 
@@ -152,85 +154,73 @@ async function main() {
     where: { userId: customerUser.id },
   });
 
-  const goldan = await prisma.category.findUniqueOrThrow({
-    where: { slug: "goldan" },
-  });
-
-  const p1 = await prisma.product.upsert({
-    where: { slug: "nemune-goldan-sangi" },
-    create: {
-      slug: "nemune-goldan-sangi",
-      sku: "MS-GD-001",
-      titleFa: "گلدان سنگی نمونه",
-      descriptionFa: "محصول نمونه برای توسعه — بعد از استقرار حذف یا ویرایش کنید.",
-      priceMinor: 1_250_000,
-      compareAtMinor: 1_450_000,
-      weightGrams: 1200,
-      isActive: true,
-      isFeatured: true,
-      isNew: true,
-      isBestSeller: false,
-      categoryId: goldan.id,
-      images: {
-        create: [
-          {
-            url: "/images/placeholder-product.svg",
-            altFa: "گلدان سنگی نمونه",
-            sortOrder: 0,
-            isPrimary: true,
-          },
-        ],
-      },
-      inventory: { create: { quantityOnHand: 12, quantityReserved: 0, lowStockThreshold: 2 } },
-    },
-    update: {
-      titleFa: "گلدان سنگی نمونه",
-      priceMinor: 1_250_000,
-      isFeatured: true,
-      isNew: true,
-    },
-    include: { inventory: true },
-  });
-
-  if (!p1.inventory) {
-    await prisma.inventory.create({
-      data: { productId: p1.id, quantityOnHand: 12, lowStockThreshold: 2 },
+  let productIndex = 0;
+  for (const category of CATEGORIES) {
+    productIndex += 1;
+    const categoryRow = await prisma.category.findUniqueOrThrow({
+      where: { slug: category.slug },
     });
-  }
+    const slug = `nemune-${category.slug}`;
+    const sku = `MS-SEED-${String(productIndex).padStart(3, "0")}`;
+    const priceMinor = 450_000 + productIndex * 35_000;
+    const isFeatured = productIndex <= 4;
+    const isNew = productIndex % 3 === 0;
+    const isBestSeller = productIndex % 5 === 0;
 
-  const p2 = await prisma.product.upsert({
-    where: { slug: "nemune-tandis-resin" },
-    create: {
-      slug: "nemune-tandis-resin",
-      sku: "MS-TD-001",
-      titleFa: "تندیس رزین نمونه",
-      descriptionFa: "محصول نمونه دوم.",
-      priceMinor: 890_000,
-      isActive: true,
-      isFeatured: false,
-      isNew: true,
-      isBestSeller: true,
-      categoryId: (await prisma.category.findUniqueOrThrow({ where: { slug: "tandis" } })).id,
-      images: {
-        create: [
-          {
-            url: "/images/placeholder-product.svg",
-            altFa: "تندیس رزین",
-            sortOrder: 0,
-            isPrimary: true,
+    const product = await prisma.product.upsert({
+      where: { slug },
+      create: {
+        slug,
+        sku,
+        titleFa: `${category.nameFa} دست‌ساز نمونه`,
+        descriptionFa: `محصول نمونه در دسته ${category.nameFa} — مناسب تست فروشگاه و چیدمان دکور.`,
+        priceMinor,
+        compareAtMinor: isFeatured ? priceMinor + 120_000 : null,
+        weightGrams: 800 + productIndex * 40,
+        isActive: true,
+        isFeatured,
+        isNew,
+        isBestSeller,
+        categoryId: categoryRow.id,
+        images: {
+          create: [
+            {
+              url: "/images/placeholder-product.svg",
+              altFa: `${category.nameFa} نمونه`,
+              sortOrder: 0,
+              isPrimary: true,
+            },
+          ],
+        },
+        inventory: {
+          create: {
+            quantityOnHand: 8 + (productIndex % 6),
+            quantityReserved: 0,
+            lowStockThreshold: 2,
           },
-        ],
+        },
       },
-      inventory: { create: { quantityOnHand: 30, quantityReserved: 1, lowStockThreshold: 5 } },
-    },
-    update: { isBestSeller: true },
-    include: { inventory: true },
-  });
-
-  if (!p2.inventory) {
-    await prisma.inventory.create({
-      data: { productId: p2.id, quantityOnHand: 30, quantityReserved: 1, lowStockThreshold: 5 },
+      update: {
+        titleFa: `${category.nameFa} دست‌ساز نمونه`,
+        priceMinor,
+        isActive: true,
+        categoryId: categoryRow.id,
+        isFeatured,
+        isNew,
+        isBestSeller,
+      },
+      include: { inventory: true },
     });
+
+    if (!product.inventory) {
+      await prisma.inventory.create({
+        data: {
+          productId: product.id,
+          quantityOnHand: 8 + (productIndex % 6),
+          lowStockThreshold: 2,
+        },
+      });
+    }
   }
 
   const discount = await prisma.discount.upsert({
@@ -298,7 +288,7 @@ async function main() {
   });
 
   const productForWish = await prisma.product.findUniqueOrThrow({
-    where: { slug: "nemune-goldan-sangi" },
+    where: { slug: "nemune-goldan" },
   });
 
   await prisma.wishlist.upsert({
@@ -362,6 +352,7 @@ async function main() {
 
   console.info("Seed OK:", {
     categories: CATEGORIES.length,
+    products: productIndex,
     admin: "admin@mojasamesaidi.ir",
     customer: "customer@mojasamesaidi.ir",
     passwordNote: "ChangeMe123! (حتماً در تولید تغییر دهید)",

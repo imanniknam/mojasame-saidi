@@ -179,6 +179,7 @@ export function CheckoutFlow() {
   const [shipping, setShipping] = useState<ShippingMethod>("standard");
   const [payment, setPayment] = useState<PaymentMethod>("online");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmation, setConfirmation] =
     useState<ConfirmationSnapshot | null>(null);
 
@@ -213,7 +214,7 @@ export function CheckoutFlow() {
     setStep("shipping");
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     const nextErrors = validateAddress(address);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -221,21 +222,56 @@ export function CheckoutFlow() {
       toast.error("اطلاعات آدرس نیاز به تکمیل دارد.");
       return;
     }
-    const nextOrder = `MS-${new Intl.NumberFormat("en-US", {
-      useGrouping: false,
-    }).format(Date.now()).slice(-6)}`;
-    setOrderNumber(nextOrder);
-    setConfirmation({
-      orderNumber: nextOrder,
-      totals,
-      itemCount,
-      address,
-      shipping,
-      payment,
-    });
-    setStep("confirmation");
-    clearCart();
-    toast.success("سفارش شما ثبت شد.");
+
+    setPlacingOrder(true);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lines: lines.map((line) => ({
+            productId: line.productId,
+            quantity: line.quantity,
+            unitMinor: line.unitMinor,
+          })),
+          discount,
+          shipping,
+          payment,
+          address,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        order?: { orderNumber: string };
+        totals?: CartTotals;
+        error?: { message?: string };
+      };
+
+      if (!response.ok || !payload.ok || !payload.order) {
+        toast.error(payload.error?.message ?? "ثبت سفارش ناموفق بود.");
+        return;
+      }
+
+      const nextOrder = payload.order.orderNumber;
+      const confirmedTotals = payload.totals ?? totals;
+      setOrderNumber(nextOrder);
+      setConfirmation({
+        orderNumber: nextOrder,
+        totals: confirmedTotals,
+        itemCount,
+        address,
+        shipping,
+        payment,
+      });
+      setStep("confirmation");
+      clearCart();
+      toast.success("سفارش شما ثبت شد.");
+    } catch {
+      toast.error("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
+    } finally {
+      setPlacingOrder(false);
+    }
   }
 
   const stepMotion = reduceMotion
@@ -533,8 +569,13 @@ export function CheckoutFlow() {
                     <Button variant="ghost" size="touch" onClick={() => setStep("shipping")}>
                       بازگشت
                     </Button>
-                    <Button variant="luxury" size="touch" onClick={placeOrder}>
-                      ثبت سفارش
+                    <Button
+                      variant="luxury"
+                      size="touch"
+                      onClick={() => void placeOrder()}
+                      disabled={placingOrder}
+                    >
+                      {placingOrder ? "در حال ثبت…" : "ثبت سفارش"}
                     </Button>
                   </div>
                 </Card>
@@ -653,8 +694,14 @@ export function CheckoutFlow() {
               </Button>
             ) : null}
             {step === "payment" ? (
-              <Button variant="luxury" size="touch" className="shrink-0 px-6" onClick={placeOrder}>
-                ثبت سفارش
+              <Button
+                variant="luxury"
+                size="touch"
+                className="shrink-0 px-6"
+                onClick={() => void placeOrder()}
+                disabled={placingOrder}
+              >
+                {placingOrder ? "در حال ثبت…" : "ثبت سفارش"}
               </Button>
             ) : null}
           </div>

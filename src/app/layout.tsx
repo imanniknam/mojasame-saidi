@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { getStoreNavUser } from "@/lib/auth/store-nav-user";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   DEFAULT_SEO_DESCRIPTION,
@@ -62,16 +63,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialSessionUser = await getStoreNavUser();
+
   return (
     <html lang="fa" dir="rtl" className={`${vazirmatn.variable} dark`}>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <JsonLd data={buildOrganizationJsonLd()} />
-        <Providers>{children}</Providers>
+        <Providers initialSessionUser={initialSessionUser}>{children}</Providers>
       </body>
     </html>
   );

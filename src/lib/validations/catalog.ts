@@ -56,3 +56,19 @@ export const catalogListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   includeInactive: z.coerce.boolean().default(false),
 });
+
+export const adminProductListSchema = z.object({
+  q: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  categoryId: z.string().trim().optional(),
+  isFeatured: z
+    .enum(["all", "yes", "no"])
+    .optional()
+    .default("all"),
+  status: z.enum(["all", "active", "inactive"]).optional().default("all"),
+});
+
+export type AdminProductListInput = z.infer<typeof adminProductListSchema>;
+export type ProductCreateInput = z.infer<typeof productCreateSchema>;
+export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;

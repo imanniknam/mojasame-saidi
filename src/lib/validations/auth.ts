@@ -15,8 +15,8 @@ export function normalizeDigits(value: string) {
 const phoneSchema = z
   .string()
   .trim()
-  .transform(normalizeDigits)
-  .regex(/^09\d{9}$/, "شماره موبایل معتبر نیست.");
+  .transform((value) => normalizeDigits(value).replace(/[^\d]/g, ""))
+  .pipe(z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست."));
 
 export const loginSchema = z.object({
   identifier: z.string().trim().min(3, "ایمیل یا شماره موبایل را وارد کنید."),

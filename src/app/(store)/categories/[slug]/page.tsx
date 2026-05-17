@@ -5,21 +5,23 @@ import { ProductCard } from "@/components/store/product-card";
 import { formatPriceFa } from "@/lib/format";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
-  getCategoryBySlug,
-  getProductsByCategory,
-  storeCategories,
-} from "@/lib/storefront/mock-data";
+  getStoreCategoryBySlug,
+  listProductsByCategorySlug,
+  listStoreCategories,
+} from "@/lib/storefront/queries";
 
 type CategoryPageProps = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return storeCategories.map((category) => ({ slug: category.slug }));
+export async function generateStaticParams() {
+  const categories = await listStoreCategories();
+  return categories.map((category) => ({ slug: category.slug }));
 }
 
-export function generateMetadata({ params }: CategoryPageProps): Metadata {
-  const category = getCategoryBySlug(params.slug);
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getStoreCategoryBySlug(slug);
   if (!category) {
     return {
       title: "دسته‌بندی پیدا نشد",
@@ -34,11 +36,12 @@ export function generateMetadata({ params }: CategoryPageProps): Metadata {
   });
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const category = getCategoryBySlug(params.slug);
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { slug } = await params;
+  const category = await getStoreCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = getProductsByCategory(category.slug);
+  const products = await listProductsByCategorySlug(category.slug);
 
   return (
     <main className="ds-section mx-auto max-w-6xl space-y-8 pb-28">

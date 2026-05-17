@@ -4,9 +4,27 @@ type AuthApiResult<T> =
 
 export async function readAuthResponse<T>(response: Response): Promise<AuthApiResult<T>> {
   const contentType = response.headers.get("content-type") ?? "";
+  let body: unknown = null;
 
-  if (contentType.includes("application/json")) {
-    return (await response.json()) as AuthApiResult<T>;
+  try {
+    const text = await response.text();
+    if (text) {
+      body = JSON.parse(text);
+    }
+  } catch {
+    if (contentType.includes("application/json")) {
+      return {
+        ok: false,
+        error: {
+          code: "INVALID_JSON",
+          message: "پاسخ سرور قابل خواندن نیست.",
+        },
+      };
+    }
+  }
+
+  if (body && typeof body === "object" && "ok" in body) {
+    return body as AuthApiResult<T>;
   }
 
   return {
@@ -15,8 +33,8 @@ export async function readAuthResponse<T>(response: Response): Promise<AuthApiRe
       code: "NON_JSON_RESPONSE",
       message:
         response.status >= 500
-          ? "سرور ورود با خطا روبه‌رو شد. تنظیمات محیط و پایگاه داده را بررسی کنید."
-          : "پاسخ سرور قابل خواندن نیست.",
+          ? "خطای سرور (پاسخ HTML). PostgreSQL را روشن کنید، در پوشه mojasame-saidi دستور npm run db:setup را اجرا کنید، سپس سرور dev را ری‌استارت کنید. برای تشخیص: /api/health/db"
+          : `درخواست ناموفق بود (کد ${response.status}).`,
     },
   };
 }

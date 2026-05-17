@@ -1,13 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
-import { SiteHeader } from "@/components/layout/site-header";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { StoreShell } from "@/components/layout/store-shell";
 import { CategoryCard } from "@/components/store/category-card";
 import { ProductCard } from "@/components/store/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPriceFa } from "@/lib/format";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { storeCategories, storeProducts } from "@/lib/storefront/mock-data";
+import {
+  listFeaturedProducts,
+  listStoreCategories,
+  listStoreProducts,
+} from "@/lib/storefront/queries";
 
 export const metadata = buildPageMetadata({
   title: "فروشگاه مجسمه‌سازی سعیدی | مجسمه و دکور دست‌ساز",
@@ -16,13 +19,27 @@ export const metadata = buildPageMetadata({
   path: "/",
 });
 
-export default function RootPage() {
-  const featuredProducts = storeProducts.filter((product) => product.isFeatured || product.isNew);
+export default async function RootPage() {
+  const [storeCategories, storeProducts, featuredProducts] = await Promise.all([
+    listStoreCategories(),
+    listStoreProducts(),
+    listFeaturedProducts(8),
+  ]);
   const heroProduct = featuredProducts[0] ?? storeProducts[0];
 
+  if (!heroProduct) {
+    return (
+      <StoreShell>
+        <main className="ds-section mx-auto max-w-6xl pb-28 text-center">
+          <h1 className="ds-title">فروشگاه مجسمه‌سازی سعیدی</h1>
+          <p className="ds-subtitle mt-2">محصولی در پایگاه‌داده ثبت نشده است.</p>
+        </main>
+      </StoreShell>
+    );
+  }
+
   return (
-    <>
-      <SiteHeader cartCount={0} wishlistCount={0} user={null} />
+    <StoreShell>
       <main className="ds-section mb-nav mx-auto max-w-6xl space-y-12 pb-6">
         <section className="relative overflow-hidden rounded-[2rem] border border-highlight/15 bg-[linear-gradient(135deg,hsl(var(--card-elevated))_0%,hsl(var(--background))_52%,hsl(var(--accent))_100%)] p-4 text-start shadow-float sm:p-6 lg:p-8">
           <div
@@ -115,7 +132,7 @@ export default function RootPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
+            {(featuredProducts.length ? featuredProducts : storeProducts).map((product) => (
               <ProductCard
                 key={product.id}
                 href={`/products/${product.slug}`}
@@ -134,7 +151,6 @@ export default function RootPage() {
           </div>
         </section>
       </main>
-      <MobileBottomNav />
-    </>
+    </StoreShell>
   );
 }

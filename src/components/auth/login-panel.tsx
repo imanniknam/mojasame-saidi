@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { readAuthResponse } from "@/lib/auth/client";
+import { useSession, notifySessionChanged } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 
 type LoginMode = "customer" | "admin";
@@ -46,8 +47,18 @@ const contentByMode = {
   },
 } satisfies Record<LoginMode, Record<string, string>>;
 
+type LoginSuccessPayload = {
+  redirectTo?: string;
+  user?: {
+    displayName: string;
+    email: string;
+    role: "CUSTOMER" | "ADMIN";
+  };
+};
+
 export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
   const router = useRouter();
+  const { setUser, refresh } = useSession();
   const copy = contentByMode[mode];
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -85,15 +96,36 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
         }),
       });
 
-      const result = await readAuthResponse<{ redirectTo?: string }>(response);
+      const result = await readAuthResponse<LoginSuccessPayload>(response);
 
       if (!response.ok || !result.ok) {
-        setError(result.error?.message ?? "ورود با خطا روبه‌رو شد.");
+        setError(
+          !result.ok && result.error?.message
+            ? result.error.message
+            : "ورود با خطا روبه‌رو شد.",
+        );
         return;
       }
 
+      const redirectTo =
+        "redirectTo" in result && result.redirectTo
+          ? result.redirectTo
+          : mode === "admin"
+            ? "/admin"
+            : "/";
+
+      if ("user" in result && result.user) {
+        setUser({
+          name: result.user.displayName,
+          email: result.user.email,
+          role: result.user.role,
+        });
+      }
+
       setMessage("ورود موفق بود. در حال انتقال...");
-      router.replace(result.redirectTo ?? (mode === "admin" ? "/admin" : "/"));
+      notifySessionChanged();
+      await refresh();
+      router.replace(redirectTo);
       router.refresh();
     } catch {
       setError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
@@ -259,13 +291,36 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
           </Button>
         </form>
 
-        <div className="mt-7 flex flex-col gap-3 text-center text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-7 space-y-4">
+          {mode === "customer" ? (
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-start">
+              <p className="text-sm font-semibold text-foreground">ورود مدیر فروشگاه</p>
+              <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                برای مدیریت محصولات، سفارش‌ها و تنظیمات از پنل ادمین وارد شوید.
+              </p>
+              <Button variant="outline" size="sm" className="mt-3 w-full rounded-xl" asChild>
+                <Link href="/admin/login">ورود به پنل مدیریت</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-start">
+              <p className="text-sm text-muted-foreground">
+                حساب تست مدیر:{" "}
+                <span className="font-mono text-foreground" dir="ltr">
+                  admin@mojasamesaidi.ir
+                </span>
+              </p>
+            </div>
+          )}
+
+        <div className="flex flex-col gap-3 text-center text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>
             {mode === "customer" ? "حساب ندارید؟" : "ورود مدیران ثبت و مانیتور می‌شود."}
           </span>
           <Link href={copy.switchHref} className="font-semibold text-highlight hover:underline">
             {copy.switchLabel}
           </Link>
+        </div>
         </div>
       </Card>
     </section>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_DOMAIN, SITE_NAME_FA } from "@/lib/constants/site";
-import type { StoreProduct } from "@/lib/storefront/mock-data";
+import type { StoreProduct } from "@/lib/storefront/types";
 
 type BuildMetadataInput = {
   title: string;

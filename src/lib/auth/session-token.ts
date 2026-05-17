@@ -29,19 +29,17 @@ function getAuthSecret() {
 }
 
 function base64UrlEncode(input: string | Uint8Array) {
-  const bytes = typeof input === "string" ? textEncoder.encode(input) : input;
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  const buffer =
+    typeof input === "string" ? Buffer.from(input, "utf8") : Buffer.from(input);
+  return buffer.toString("base64url");
+}
+
+function base64UrlDecodeToBytes(input: string) {
+  return new Uint8Array(Buffer.from(input, "base64url"));
 }
 
 function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized.padEnd(
-    normalized.length + ((4 - (normalized.length % 4)) % 4),
-    "=",
-  );
-  return atob(padded);
+  return Buffer.from(input, "base64url").toString("utf8");
 }
 
 async function getSigningKey() {
@@ -68,7 +66,7 @@ async function verifySignature(payload: string, signature: string) {
     return crypto.subtle.verify(
       "HMAC",
       await getSigningKey(),
-      Uint8Array.from(base64UrlDecode(signature), (char) => char.charCodeAt(0)),
+      base64UrlDecodeToBytes(signature),
       textEncoder.encode(payload),
     );
   } catch {

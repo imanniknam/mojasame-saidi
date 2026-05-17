@@ -44,6 +44,7 @@ const MENU_LINKS = [
 export type NavUser = {
   name: string;
   email?: string;
+  role?: "CUSTOMER" | "ADMIN";
 };
 
 export type SiteHeaderProps = {
@@ -197,6 +198,7 @@ export function SiteHeader({
                   <div className="mt-2 border-t border-border/60 pt-3">
                     {user ? (
                       <>
+                        <p className="mb-2 px-3 text-sm font-semibold text-foreground">{user.name}</p>
                         <Link
                           href="/profile"
                           onClick={() => setMenuOpen(false)}
@@ -241,6 +243,11 @@ export function SiteHeader({
               مجسمه‌سازی سعیدی
             </span>
           </Link>
+          {user ? (
+            <span className="max-w-[7rem] truncate text-xs font-semibold text-highlight md:hidden">
+              {user.name}
+            </span>
+          ) : null}
         </div>
 
         <form
@@ -362,12 +369,20 @@ export function SiteHeader({
                       ) : null}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">پروفایل</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders">سفارش‌ها</Link>
-                    </DropdownMenuItem>
+                    {user.role === "ADMIN" ? (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">پنل مدیریت</Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/profile">پروفایل</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/orders">سفارش‌ها</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link href="/favorites">علاقه‌مندی</Link>
                     </DropdownMenuItem>
