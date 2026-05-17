@@ -1,0 +1,413 @@
+// MojasameSaidi.ir — PostgreSQL schema for Persian RTL ecommerce
+// Money fields use *Minor suffix = smallest currency unit (e.g. Toman) app-wide.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  VOIDED
+}
+
+enum PaymentProvider {
+  MANUAL
+  ZARINPAL
+  IDPAY
+  SNAPP_PAY
+  OTHER
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED_MINOR
+}
+
+enum DiscountScope {
+  ALL
+  CATEGORY
+  PRODUCT
+}
+
+enum BannerPlacement {
+  HERO
+  PROMO_STRIP
+  CATEGORY_TOP
+  PDP_SIDEBAR
+}
+
+enum AddressLabel {
+  HOME
+  WORK
+  OTHER
+}
+
+// ---------------------------------------------------------------------------
+// Auth & profiles
+// ---------------------------------------------------------------------------
+
+/// حساب ورود (ایمیل/رمز یا OAuth در آینده)
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String?
+  phone        String?   @unique
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  customer Customer?
+  admin    Admin?
+
+  @@index([isActive])
+}
+
+/// پروفایل خریدار — هر کاربر فروشگاه یک Customer
+model Customer {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName  String?
+  lastName   String?
+  /// نام نمایشی فارسی (اختیاری)
+  displayFa  String?
+  nationalId String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  wishlists Wishlist[]
+
+  @@index([userId])
+}
+
+/// پروفایل ادمین — جدا از Customer برای مجوز و مسئولیت
+model Admin {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName  String
+  isSuperAdmin Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameFa    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products  Product[]
+  discounts Discount[] @relation("DiscountCategories")
+
+  @@index([isActive, sortOrder])
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  sku             String?  @unique
+  titleFa         String
+  descriptionFa   String   @default("")
+  /// قیمت واحد به خرده‌ی پول (مثلاً تومان)
+  priceMinor      Int
+  compareAtMinor  Int?
+  /// وزن تقریبی برای ارسال (گرم) — اختیاری
+  weightGrams     Int?
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  isNew           Boolean  @default(false)
+  isBestSeller    Boolean  @default(false)
+  metaTitleFa     String?
+  metaDescFa      String?
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  images     ProductImage[]
+  inventory  Inventory?
+  orderItems OrderItem[]
+  wishlists  Wishlist[]
+  discounts  Discount[]   @relation("DiscountProducts")
+
+  @@index([categoryId, isActive])
+  @@index([isActive, isFeatured])
+  @@index([isActive, isNew])
+  @@index([isActive, isBestSeller])
+}
+
+/// موجودی جدا از Product برای رزرو و آستانه هشدار
+model Inventory {
+  id                String   @id @default(cuid())
+  productId         String   @unique
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantityOnHand    Int      @default(0)
+  quantityReserved  Int      @default(0)
+  lowStockThreshold Int      @default(3)
+  updatedAt         DateTime @updatedAt
+
+  @@index([quantityOnHand])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altFa     String  @default("")
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  @@index([productId, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Discounts
+// ---------------------------------------------------------------------------
+
+model Discount {
+  id               String        @id @default(cuid())
+  code             String?       @unique
+  nameFa           String
+  descriptionFa    String        @default("")
+  type             DiscountType
+  /// برای PERCENT: ۰–۱۰۰؛ برای FIXED_MINOR: مبلغ تخفیف به خرده‌ی پول
+  value            Int
+  scope            DiscountScope @default(ALL)
+  minOrderMinor    Int?
+  maxDiscountMinor Int?
+  startsAt         DateTime?
+  endsAt           DateTime?
+  usageLimit       Int?
+  usageCount       Int           @default(0)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  categories Category[] @relation("DiscountCategories")
+  products   Product[]  @relation("DiscountProducts")
+
+  @@index([isActive, startsAt, endsAt])
+  @@index([scope])
+}
+
+// ---------------------------------------------------------------------------
+// Customer addresses
+// ---------------------------------------------------------------------------
+
+model Address {
+  id           String       @id @default(cuid())
+  customerId   String
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label        AddressLabel @default(HOME)
+  recipientFa  String
+  phone        String
+  provinceFa   String
+  cityFa       String
+  postalCode   String?
+  line1        String
+  line2        String?
+  plaque       String?
+  unit         String?
+  isDefault    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  ordersShipping Order[] @relation("OrderShippingAddress")
+  ordersBilling  Order[] @relation("OrderBillingAddress")
+
+  @@index([customerId])
+  @@index([customerId, isDefault])
+}
+
+// ---------------------------------------------------------------------------
+// Wishlist
+// ---------------------------------------------------------------------------
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Orders & payments
+// ---------------------------------------------------------------------------
+
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  status            OrderStatus @default(AWAITING_PAYMENT)
+  customerId        String?
+  customer          Customer?   @relation(fields: [customerId], references: [id])
+  /// مهمان: در صورت نبود customerId
+  guestEmail        String?
+  guestPhone        String?
+  guestNameFa       String?
+  currency          String      @default("IRT")
+  subtotalMinor     Int
+  discountMinor     Int         @default(0)
+  shippingMinor     Int         @default(0)
+  taxMinor          Int         @default(0)
+  totalMinor        Int
+  notesCustomer     String?
+  notesAdmin        String?
+  trackingToken     String      @unique @default(cuid())
+  shippingAddressId String?
+  shippingAddress   Address?    @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String?
+  billingAddress    Address?    @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  /// اسنپ‌شات غیرقابل‌تغییر برای بایگانی قانونی
+  shippingSnapshot  Json
+  billingSnapshot   Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@index([guestPhone])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  quantity       Int
+  unitPriceMinor Int
+  discountMinor  Int     @default(0)
+  taxMinor       Int     @default(0)
+  titleFaSnap    String
+  skuSnap        String?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id            String          @id @default(cuid())
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      PaymentProvider @default(MANUAL)
+  status        PaymentStatus   @default(PENDING)
+  amountMinor   Int
+  currency      String          @default("IRT")
+  externalRef   String?
+  authority     String?
+  cardPanMasked String?
+  rawPayload    Json?
+  paidAt        DateTime?
+  failedAt      DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([orderId, status])
+  @@index([provider, externalRef])
+  @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Homepage & admin customization
+// ---------------------------------------------------------------------------
+
+model Banner {
+  id             String          @id @default(cuid())
+  titleFa        String?
+  subtitleFa     String?
+  imageUrl       String
+  mobileImageUrl String?
+  href           String?
+  placement      BannerPlacement @default(HERO)
+  sortOrder      Int             @default(0)
+  isActive       Boolean         @default(true)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([placement, isActive, sortOrder])
+}
+
+model HomepageSection {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  titleFa    String?
+  subtitleFa String?
+  isEnabled  Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  /// پیکربندی UI: اسلاگ محصولات ویژه، تعداد آیتم، استایل کارت و غیره
+  config     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isEnabled, sortOrder])
+}
+
+/// تنظیمات سراسری فروشگاه — سفارشی‌سازی توسط ادمین
+model StoreSettings {
+  id             Int      @id @default(1)
+  brandNameFa    String   @default("فروشگاه مجسمه‌سازی سعیدی")
+  taglineFa      String?
+  logoUrl        String?
+  faviconUrl     String?
+  ogDefaultImage String?
+  /// مقادیر HSL بدون «hsl()» برای Tailwind/CSS متغیر
+  primaryHsl     String   @default("24 10% 14%")
+  accentHsl      String   @default("32 45% 42%")
+  /// فلگ‌های نمایش بلوک‌ها، متن‌های اعتماد، شماره پشتیبانی و ...
+  featureFlags   Json?
+  trustBadges    Json?
+  supportPhone   String?
+  supportEmail   String?
+  socialLinks    Json?
+  updatedAt      DateTime @updatedAt
+}

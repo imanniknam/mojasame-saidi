@@ -1,0 +1,1 @@
+export { softFade } from "./variants";

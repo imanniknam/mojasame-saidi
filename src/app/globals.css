@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design system: فروشگاه مجسمه‌سازی سعیدی
+ * Dark gallery, champagne accents, luxury handmade mood, RTL-first logical tokens.
+ */
+@layer base {
+  :root {
+    /* ——— Color (HSL channels) ——— */
+    --background: 36 16% 6%;
+    --foreground: 42 32% 92%;
+
+    --card: 38 13% 10%;
+    --card-foreground: 42 32% 92%;
+    --card-elevated: 38 14% 13%;
+
+    --popover: 38 13% 9%;
+    --popover-foreground: 42 32% 92%;
+
+    --muted: 36 10% 16%;
+    --muted-foreground: 38 13% 64%;
+
+    --accent: 38 28% 18%;
+    --accent-foreground: 42 36% 90%;
+
+    --secondary: 38 11% 14%;
+    --secondary-foreground: 42 32% 88%;
+
+    --primary: 41 56% 67%;
+    --primary-foreground: 34 18% 8%;
+
+    --destructive: 1 63% 52%;
+    --destructive-foreground: 42 32% 96%;
+
+    --border: 39 14% 19%;
+    --input: 39 14% 19%;
+    --ring: 41 56% 67%;
+
+    /* Champagne gold highlight (links, CTAs, focus accents) */
+    --highlight: 41 56% 67%;
+    --highlight-foreground: 34 18% 8%;
+
+    --radius: 0.875rem;
+
+    /* ——— Typography (Vazirmatn via next/font on html) ——— */
+    --font-display: var(--font-vazirmatn), system-ui, sans-serif;
+    --leading-display: 1.15;
+    --leading-snug: 1.35;
+    --leading-body: 1.75;
+    --tracking-display: -0.02em;
+    --tracking-tight: -0.01em;
+
+    /* ——— Spacing rhythm (rem) ——— */
+    --section-y: clamp(2.5rem, 6vw, 4.5rem);
+    --section-x: clamp(1rem, 4vw, 1.75rem);
+    --touch-min: 2.75rem;
+
+    /* ——— Shadows (soft artisan) ——— */
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.45);
+    --shadow-sm: 0 12px 34px hsl(0 0% 0% / 0.32);
+    --shadow-md: 0 22px 58px hsl(0 0% 0% / 0.42);
+    --shadow-lg: 0 34px 90px hsl(0 0% 0% / 0.55);
+    --shadow-inner-warm: inset 0 1px 0 hsl(42 60% 82% / 0.08);
+
+    /* Safe areas (mobile) */
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
+  .dark {
+    --background: 36 16% 6%;
+    --foreground: 42 32% 92%;
+    --card: 38 13% 10%;
+    --card-foreground: 42 32% 92%;
+    --card-elevated: 38 14% 13%;
+    --popover: 38 13% 9%;
+    --popover-foreground: 42 32% 92%;
+    --muted: 36 10% 16%;
+    --muted-foreground: 38 13% 64%;
+    --accent: 38 28% 18%;
+    --accent-foreground: 42 36% 90%;
+    --secondary: 38 11% 14%;
+    --secondary-foreground: 42 32% 88%;
+    --primary: 41 56% 67%;
+    --primary-foreground: 34 18% 8%;
+    --destructive: 1 63% 52%;
+    --destructive-foreground: 42 32% 96%;
+    --border: 39 14% 19%;
+    --input: 39 14% 19%;
+    --ring: 41 56% 67%;
+    --highlight: 41 56% 67%;
+    --highlight-foreground: 34 18% 8%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background:
+      radial-gradient(circle at top right, hsl(41 56% 67% / 0.12), transparent 32rem),
+      radial-gradient(circle at bottom left, hsl(33 44% 32% / 0.18), transparent 30rem),
+      hsl(var(--background));
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  ::selection {
+    @apply bg-accent text-accent-foreground;
+  }
+}
+
+/* ——— Typography utilities (semantic) ——— */
+@layer components {
+  .ds-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
+    @apply text-3xl sm:text-4xl md:text-[2.75rem];
+  }
+
+  .ds-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-snug);
+    @apply text-xl sm:text-2xl;
+  }
+
+  .ds-subtitle {
+    @apply text-sm font-medium text-muted-foreground sm:text-base;
+  }
+
+  .ds-body {
+    line-height: var(--leading-body);
+    @apply text-[0.9375rem] sm:text-base text-foreground/90;
+  }
+
+  .ds-label {
+    @apply text-sm font-medium leading-none text-foreground;
+  }
+
+  .ds-overline {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+
+  /** Section vertical rhythm */
+  .ds-section {
+    padding-block: var(--section-y);
+    padding-inline: var(--section-x);
+  }
+
+  /** Touch-friendly hit target (min 44px) */
+  .ds-touch-target {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+  }
+}
+
+@layer utilities {
+  .shadow-elegant {
+    box-shadow: var(--shadow-sm), var(--shadow-inner-warm);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-float {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
+
+  .mb-nav {
+    margin-bottom: calc(4.25rem + var(--safe-bottom));
+  }
+}

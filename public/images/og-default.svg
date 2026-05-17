@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="A1H4�'G E,3EG3'2� 39�/�">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f3eb"/>
+      <stop offset="100%" stop-color="#e7d8c2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <circle cx="230" cy="165" r="105" fill="#cdb99f" opacity="0.35"/>
+  <circle cx="980" cy="485" r="150" fill="#8b5e34" opacity="0.12"/>
+  <path d="M475 455c50-95 200-95 250 0v62H475z" fill="#b79f84" opacity="0.38"/>
+  <path d="M545 255c0-52 110-52 110 0 0 44-23 74-55 74s-55-30-55-74z" fill="#8b5e34" opacity="0.32"/>
+  <text x="600" y="260" text-anchor="middle" direction="rtl" unicode-bidi="bidi-override" font-family="Tahoma, Arial, sans-serif" font-size="54" font-weight="700" fill="#2c241f">A1H4�'G E,3EG3'2� 39�/�</text>
+  <text x="600" y="325" text-anchor="middle" direction="rtl" unicode-bidi="bidi-override" font-family="Tahoma, Arial, sans-serif" font-size="28" fill="#5d5148">E,3EG �D/'F H /�H1 /3*3'2 (' -3 �1E GF1�</text>
+  <text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" letter-spacing="3" fill="#8b5e34">MojasameSaidi.ir</text>
+</svg>
