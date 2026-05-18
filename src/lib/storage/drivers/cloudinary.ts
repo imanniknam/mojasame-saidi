@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHash } from "node:crypto";
 import { getCloudinaryConfig } from "../config";
 import type { ImageStorageDriver, UploadImageInput, UploadedAsset } from "../types";
