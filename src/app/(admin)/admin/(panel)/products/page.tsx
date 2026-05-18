@@ -12,7 +12,7 @@ import {
   searchAdminProducts,
 } from "@/lib/admin/products/queries";
 import { formatPriceFa } from "@/lib/format";
-import { shouldUnoptimizeImageUrl } from "@/lib/storage/image-client";
+import { shouldUnoptimizeImageUrl } from "@/lib/image";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

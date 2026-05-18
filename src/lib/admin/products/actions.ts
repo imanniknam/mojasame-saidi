@@ -14,7 +14,6 @@ import {
   deactivateProductRecord,
   updateProductRecord,
 } from "./service";
-import { ImageUploadError, uploadProductImageFiles } from "@/lib/storage/server";
 import type { ProductActionState } from "./types";
 import { initialProductActionState } from "./types";
 
@@ -67,30 +66,6 @@ export async function deleteProductAction(productId: string): Promise<ProductAct
     return { ok: true, message: "محصول غیرفعال شد." };
   } catch (error) {
     return actionError(error, "غیرفعال‌سازی محصول با خطا روبه‌رو شد.");
-  }
-}
-
-export async function uploadProductImagesAction(
-  formData: FormData,
-): Promise<{ ok: true; uploads: { url: string }[] } | ProductActionState> {
-  try {
-    await requireActiveAdminSession();
-    const files = formData.getAll("files").filter((item): item is File => item instanceof File);
-    const uploads = await uploadProductImageFiles(files);
-    return {
-      ok: true,
-      uploads: uploads.map((u) => ({
-        url: u.url,
-        publicId: u.publicId,
-        width: u.width,
-        height: u.height,
-      })),
-    };
-  } catch (error) {
-    if (error instanceof ImageUploadError) {
-      return { ok: false, message: error.message };
-    }
-    return actionError(error, "آپلود تصویر با خطا روبه‌رو شد.");
   }
 }
 

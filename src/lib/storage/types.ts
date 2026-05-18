@@ -13,7 +13,7 @@ export type UploadedAsset = {
 };
 
 export type UploadImageInput = {
-  buffer: Buffer;
+  buffer: Uint8Array;
   mimeType: string;
   originalName: string;
 };

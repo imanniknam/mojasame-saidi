@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { uploadProductImagesAction } from "@/lib/admin/products/actions";
 import {
   createImageId,
   filesWithinLimit,
@@ -111,7 +110,14 @@ export function AdminProductImagesField({ value, onChange, fieldError }: AdminPr
       files.forEach((file) => formData.append("files", file));
 
       startUpload(async () => {
-        const result = await uploadProductImagesAction(formData);
+        const response = await fetch("/api/upload-product-images", {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = (await response.json()) as
+          | { ok: true; uploads: { url: string; publicId?: string; width?: number; height?: number }[] }
+          | { ok: false; error?: { message?: string }; message?: string };
 
         placeholders.forEach((p) => {
           URL.revokeObjectURL(p.previewUrl);
@@ -119,8 +125,11 @@ export function AdminProductImagesField({ value, onChange, fieldError }: AdminPr
         });
         setPending((prev) => prev.filter((p) => !placeholders.some((ph) => ph.id === p.id)));
 
-        if (!("uploads" in result)) {
-          toast.error(result.message ?? "آپلود ناموفق بود.");
+        if (!response.ok || !result.ok) {
+          const message = result.ok
+            ? "آپلود ناموفق بود."
+            : result.error?.message ?? result.message ?? "آپلود ناموفق بود.";
+          toast.error(message);
           return;
         }
 

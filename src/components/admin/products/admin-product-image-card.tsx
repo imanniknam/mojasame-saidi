@@ -9,7 +9,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { shouldUnoptimizeImageUrl } from "@/lib/storage/image-client";
+import { shouldUnoptimizeImageUrl } from "@/lib/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";

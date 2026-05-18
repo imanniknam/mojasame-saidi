@@ -25,4 +25,7 @@ Only **URLs** (and optional `publicId` in API responses) are stored in Prisma `P
 ## API
 
 - `POST /api/admin/uploads` — multipart field `files`
-- Server Action `uploadProductImagesAction`
+- `POST /api/upload-product-images` — multipart field `files`
+
+Client components must import browser-safe image helpers from `@/lib/image`.
+Server upload code lives in `@/server/storage/upload-product-images`.
