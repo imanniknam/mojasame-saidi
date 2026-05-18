@@ -15,7 +15,7 @@ export {
   createSessionToken,
   verifySessionToken,
 };
-export type { SessionUser };
+export type { SessionRole, SessionUser } from "@/lib/auth/session-token";
 
 export async function getSessionUserFromRequest(_request?: Request | NextRequest) {
   const { cookies } = await import("next/headers");
