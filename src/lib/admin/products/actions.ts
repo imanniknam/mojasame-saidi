@@ -14,7 +14,7 @@ import {
   deactivateProductRecord,
   updateProductRecord,
 } from "./service";
-import { ImageUploadError, uploadProductImageFiles } from "@/lib/storage";
+import { ImageUploadError, uploadProductImageFiles } from "@/lib/storage/server";
 import type { ProductActionState } from "./types";
 import { initialProductActionState } from "./types";
 

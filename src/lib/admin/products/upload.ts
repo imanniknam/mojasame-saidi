@@ -1,5 +1,5 @@
 /**
- * @deprecated Import from `@/lib/storage` instead.
+ * @deprecated Import from `@/lib/storage/server` instead.
  * Re-exported for backward compatibility with existing imports.
  */
 export {
@@ -8,4 +8,4 @@ export {
   MAX_PRODUCT_IMAGES as MAX_IMAGES,
   ALLOWED_IMAGE_MIME as ALLOWED_IMAGE_TYPES,
   type UploadedAsset as SavedUpload,
-} from "@/lib/storage";
+} from "@/lib/storage/server";

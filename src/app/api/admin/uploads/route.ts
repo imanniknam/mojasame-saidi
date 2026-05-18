@@ -1,5 +1,9 @@
 import { requireActiveAdmin } from "@/lib/auth/server";
-import { ImageUploadError, getStorageDriverName, uploadProductImageFiles } from "@/lib/storage";
+import {
+  ImageUploadError,
+  getStorageDriverName,
+  uploadProductImageFiles,
+} from "@/lib/storage/server";
 import { apiErrorResponse, jsonNoStore } from "@/lib/server/api-response";
 
 export async function POST(request: Request) {

@@ -1,4 +1,4 @@
-import { MAX_PRODUCT_IMAGES } from "@/lib/storage";
+import { MAX_PRODUCT_IMAGES } from "@/lib/storage/image-client";
 
 export const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/avif";
 
