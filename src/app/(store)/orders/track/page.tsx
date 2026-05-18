@@ -8,12 +8,6 @@ type Props = {
   }>;
 };
 
-export default async function Page({ searchParams }: Props) {
-  const params = await searchParams;
-
-  const token = params.token;
-}
-
 export const metadata: Metadata = {
   title: "پیگیری سفارش",
   description: "وضعیت سفارش شما",
@@ -23,8 +17,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function OrderTrackPage({ searchParams }: Props) {
-  const token = searchParams.token ?? "";
+export default async function OrderTrackPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const token = params.token ?? "";
 
   return (
     <main className="ds-section mx-auto max-w-lg space-y-6 pb-28 text-center">
