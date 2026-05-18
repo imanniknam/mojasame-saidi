@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     const sessionUser = await getActiveSessionUserFromRequest(request);
     const { order, totals } = await createStoreOrder({
       ...body,
+      discount: body.discount ?? null,
       sessionUser,
     });
 
