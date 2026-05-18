@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -319,7 +319,7 @@ async function main() {
         cityFa: "تهران",
         line1: "خیابان نمونه، پلاک ۱",
       },
-      billingSnapshot: null,
+      billingSnapshot: Prisma.JsonNull,
       items: {
         create: [
           {
