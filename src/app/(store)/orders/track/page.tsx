@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-type Props = { searchParams: { token?: string } };
+type Props = {
+  searchParams: Promise<{
+    token?: string;
+  }>;
+};
+
+export default async function Page({ searchParams }: Props) {
+  const params = await searchParams;
+
+  const token = params.token;
+}
 
 export const metadata: Metadata = {
   title: "پیگیری سفارش",
