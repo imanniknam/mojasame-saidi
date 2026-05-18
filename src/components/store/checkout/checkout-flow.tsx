@@ -243,8 +243,9 @@ export function CheckoutFlow() {
 
       const payload = (await response.json()) as {
         ok?: boolean;
-        order?: { orderNumber: string };
+        order?: { orderNumber: string; trackingToken?: string };
         totals?: CartTotals;
+        payment?: { provider: "ZARINPAL" | "MANUAL"; gatewayUrl: string | null };
         error?: { message?: string };
       };
 
@@ -254,6 +255,14 @@ export function CheckoutFlow() {
       }
 
       const nextOrder = payload.order.orderNumber;
+
+      if (payload.payment?.gatewayUrl) {
+        clearCart();
+        toast.message("در حال انتقال به درگاه زرین‌پال…");
+        window.location.assign(payload.payment.gatewayUrl);
+        return;
+      }
+
       const confirmedTotals = payload.totals ?? totals;
       setOrderNumber(nextOrder);
       setConfirmation({
@@ -266,7 +275,11 @@ export function CheckoutFlow() {
       });
       setStep("confirmation");
       clearCart();
-      toast.success("سفارش شما ثبت شد.");
+      toast.success(
+        payment === "cardToCard"
+          ? "سفارش ثبت شد. پرداخت کارت‌به‌کارت را انجام دهید."
+          : "سفارش شما ثبت شد.",
+      );
     } catch {
       toast.error("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
     } finally {
@@ -528,8 +541,8 @@ export function CheckoutFlow() {
                     {[
                       {
                         id: "online" as const,
-                        title: "پرداخت آنلاین امن",
-                        desc: "اتصال به درگاه پرداخت در مرحله نهایی",
+                        title: "پرداخت آنلاین (زرین‌پال)",
+                        desc: "انتقال به درگاه امن zarinpal.com برای پرداخت کارت",
                         icon: ShieldCheck,
                       },
                       {

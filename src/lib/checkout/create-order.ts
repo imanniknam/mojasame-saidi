@@ -206,7 +206,7 @@ export async function createStoreOrder(input: CreateOrderInput) {
             },
             payments: {
               create: {
-                provider: "MANUAL",
+                provider: input.payment === "online" ? "ZARINPAL" : "MANUAL",
                 status: "PENDING",
                 amountMinor: totals.totalMinor,
               },
@@ -217,6 +217,11 @@ export async function createStoreOrder(input: CreateOrderInput) {
             orderNumber: true,
             totalMinor: true,
             trackingToken: true,
+            payments: {
+              select: { id: true, provider: true },
+              take: 1,
+              orderBy: { createdAt: "desc" },
+            },
           },
         });
 

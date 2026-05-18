@@ -2,6 +2,7 @@ import { ZodError } from "zod";
 import { getActiveSessionUserFromRequest } from "@/lib/auth/server";
 import { ensureAuthSchemaReady } from "@/lib/auth/db";
 import { createStoreOrder } from "@/lib/checkout/create-order";
+import { startZarinpalPaymentForOrder } from "@/lib/payments/zarinpal/service";
 import { jsonNoStore, apiErrorResponse } from "@/lib/server/api-response";
 import { storeCheckoutSchema } from "@/lib/validations/store-checkout";
 
@@ -29,6 +30,12 @@ const ERROR_MESSAGES: Record<string, { code: string; message: string; status: nu
     message: "قیمت محصول تغییر کرده است. سبد را به‌روز کنید.",
     status: 409,
   },
+  ZARINPAL_NOT_CONFIGURED: {
+    code: "ZARINPAL_NOT_CONFIGURED",
+    message:
+      "درگاه زرین‌پال تنظیم نشده است. ZARINPAL_MERCHANT_ID را در فایل .env وارد کنید.",
+    status: 503,
+  },
 };
 
 export async function POST(request: Request) {
@@ -48,8 +55,8 @@ export async function POST(request: Request) {
       sessionUser,
     });
 
-    return jsonNoStore({
-      ok: true,
+    const basePayload = {
+      ok: true as const,
       order: {
         id: order.id,
         orderNumber: order.orderNumber,
@@ -57,6 +64,32 @@ export async function POST(request: Request) {
         trackingToken: order.trackingToken,
       },
       totals,
+    };
+
+    if (body.payment === "online") {
+      const gateway = await startZarinpalPaymentForOrder({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        amountMinor: order.totalMinor,
+        mobile: body.address.phone,
+        email: sessionUser?.email,
+      });
+
+      return jsonNoStore({
+        ...basePayload,
+        payment: {
+          provider: "ZARINPAL" as const,
+          gatewayUrl: gateway.gatewayUrl,
+        },
+      });
+    }
+
+    return jsonNoStore({
+      ...basePayload,
+      payment: {
+        provider: "MANUAL" as const,
+        gatewayUrl: null,
+      },
     });
   } catch (error) {
     if (error instanceof ZodError) {
