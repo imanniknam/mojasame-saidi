@@ -299,7 +299,7 @@ async function main() {
     update: {},
   });
 
-  const order = await prisma.order.upsert({
+  await prisma.order.upsert({
     where: { orderNumber: "MS-100001" },
     create: {
       orderNumber: "MS-100001",
@@ -342,12 +342,6 @@ async function main() {
       },
     },
     update: { status: "PAID" },
-  });
-
-  await prisma.order.upsert({
-    where: { orderNumber: order.orderNumber },
-    create: {},
-    update: {},
   });
 
   console.info("Seed OK:", {
