@@ -14,10 +14,17 @@ type BuildMetadataInput = {
 export const DEFAULT_SEO_DESCRIPTION =
   "خرید مجسمه، گلدان، تندیس و دکور دست‌ساز از فروشگاه مجسمه‌سازی سعیدی با طراحی هنری، کیفیت بالا و ارسال مطمئن.";
 
+/** Accepts https://mojasamesaidi.ir or bare mojasamesaidi.ir from env. */
+export function normalizeSiteUrl(value: string | undefined): string {
+  const raw = value?.trim();
+  if (!raw) return SITE_URL;
+
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/$/, "");
+}
+
 export function getSiteUrl() {
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
-  return SITE_URL;
+  return normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 }
 
 export function absoluteUrl(path = "/") {
