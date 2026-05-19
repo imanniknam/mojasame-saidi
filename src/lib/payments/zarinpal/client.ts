@@ -5,17 +5,18 @@ type ZarinpalApiEnvelope<T> = {
   errors: { code: number; message: string; validations?: unknown[] }[];
 };
 
-type RequestPaymentData = {
+type ZarinpalDataBase = {
   code: number;
   message: string;
+};
+
+type RequestPaymentData = ZarinpalDataBase & {
   authority: string;
   fee_type?: string;
   fee?: number;
 };
 
-type VerifyPaymentData = {
-  code: number;
-  message: string;
+type VerifyPaymentData = ZarinpalDataBase & {
   ref_id: number;
   card_pan?: string;
   card_hash?: string;
@@ -23,7 +24,10 @@ type VerifyPaymentData = {
   fee?: number;
 };
 
-async function postZarinpal<T>(path: string, body: Record<string, unknown>) {
+async function postZarinpal<T extends ZarinpalDataBase>(
+  path: string,
+  body: Record<string, unknown>,
+) {
   const config = getZarinpalConfig();
   if (!config) {
     throw new Error("ZARINPAL_NOT_CONFIGURED");
