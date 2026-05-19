@@ -2,14 +2,11 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo/metadata";
 import { listStoreCategories, listStoreProducts } from "@/lib/storefront/queries";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-  const [storeCategories, storeProducts] = await Promise.all([
-    listStoreCategories(),
-    listStoreProducts(),
-  ]);
+export const dynamic = "force-dynamic";
 
-  const staticRoutes: MetadataRoute.Sitemap = [
+const staticRoutes = (): MetadataRoute.Sitemap => {
+  const now = new Date();
+  return [
     {
       url: absoluteUrl("/"),
       lastModified: now,
@@ -29,6 +26,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
+};
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = staticRoutes();
+
+  if (!process.env.DATABASE_URL?.trim()) {
+    return base;
+  }
+
+  try {
+    const [storeCategories, storeProducts] = await Promise.all([
+      listStoreCategories(),
+      listStoreProducts(),
+    ]);
+    const now = new Date();
 
   const categoryRoutes: MetadataRoute.Sitemap = storeCategories.map((category) => ({
     url: absoluteUrl(`/categories/${category.slug}`),
@@ -44,5 +56,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: product.isFeatured ? 0.85 : 0.7,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  return [...base, ...categoryRoutes, ...productRoutes];
+  } catch {
+    return base;
+  }
 }

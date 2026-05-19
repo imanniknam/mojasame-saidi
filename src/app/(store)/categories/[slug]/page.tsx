@@ -7,17 +7,11 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   getStoreCategoryBySlug,
   listProductsByCategorySlug,
-  listStoreCategories,
 } from "@/lib/storefront/queries";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-export async function generateStaticParams() {
-  const categories = await listStoreCategories();
-  return categories.map((category) => ({ slug: category.slug }));
-}
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;

@@ -12,18 +12,12 @@ import { IMAGE_SIZES } from "@/lib/images";
 import {
   getRelatedStoreProducts,
   getStoreProductBySlug,
-  listProductSlugs,
 } from "@/lib/storefront/queries";
 import { buildProductJsonLd, buildProductMetadata } from "@/lib/seo/metadata";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-export async function generateStaticParams() {
-  const slugs = await listProductSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;

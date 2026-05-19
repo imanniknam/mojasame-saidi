@@ -12,6 +12,8 @@ import {
   listStoreProducts,
 } from "@/lib/storefront/queries";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = buildPageMetadata({
   title: "فروشگاه مجسمه‌سازی سعیدی | مجسمه و دکور دست‌ساز",
   description:

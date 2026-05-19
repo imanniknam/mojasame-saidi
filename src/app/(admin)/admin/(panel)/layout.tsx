@@ -3,6 +3,8 @@ import { AdminShell } from "@/components/admin";
 import { getAdminDisplayName } from "@/lib/admin/queries";
 import { getActiveSessionUser } from "@/lib/auth/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPanelLayout({
   children,
 }: {
