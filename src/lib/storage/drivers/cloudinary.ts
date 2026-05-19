@@ -1,5 +1,6 @@
 import "server-only";
 
+import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { getCloudinaryConfig } from "../config";
 import type { ImageStorageDriver, UploadImageInput, UploadedAsset } from "../types";
@@ -12,9 +13,9 @@ function signParams(params: Record<string, string>, apiSecret: string) {
   return createHash("sha1").update(sorted + apiSecret).digest("hex");
 }
 
-/** Copy bytes into an ArrayBuffer so Blob accepts them under strict TS DOM types. */
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+/** Node Buffer is a valid BlobPart and avoids strict Uint8Array/ArrayBuffer typing issues. */
+function toBlobPart(bytes: Uint8Array): BlobPart {
+  return Buffer.from(bytes);
 }
 
 export const cloudinaryImageStorage: ImageStorageDriver = {
@@ -33,7 +34,7 @@ export const cloudinaryImageStorage: ImageStorageDriver = {
     const body = new FormData();
     body.append(
       "file",
-      new Blob([toArrayBuffer(input.buffer)], { type: input.mimeType }),
+      new Blob([toBlobPart(input.buffer)], { type: input.mimeType }),
       input.originalName,
     );
     body.append("api_key", apiKey);
