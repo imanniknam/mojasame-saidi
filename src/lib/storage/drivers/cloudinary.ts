@@ -12,6 +12,11 @@ function signParams(params: Record<string, string>, apiSecret: string) {
   return createHash("sha1").update(sorted + apiSecret).digest("hex");
 }
 
+/** Copy bytes into an ArrayBuffer so Blob accepts them under strict TS DOM types. */
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
+
 export const cloudinaryImageStorage: ImageStorageDriver = {
   name: "cloudinary",
 
@@ -26,7 +31,11 @@ export const cloudinaryImageStorage: ImageStorageDriver = {
     const signature = signParams(paramsToSign, apiSecret);
 
     const body = new FormData();
-    body.append("file", new Blob([input.buffer], { type: input.mimeType }), input.originalName);
+    body.append(
+      "file",
+      new Blob([toArrayBuffer(input.buffer)], { type: input.mimeType }),
+      input.originalName,
+    );
     body.append("api_key", apiKey);
     body.append("timestamp", timestamp);
     body.append("folder", folder);
