@@ -2,6 +2,33 @@ import type { CartDiscount } from "@/lib/cart/types";
 
 const FREE_SHIPPING_THRESHOLD_MINOR = 2_000_000;
 const DEFAULT_SHIPPING_MINOR = 85_000;
+const COURIER_SHIPPING_MINOR = 145_000;
+
+export type CheckoutShippingMethod = "post" | "courier";
+
+const SHIPPING_FEES_BY_METHOD: Record<CheckoutShippingMethod, number> = {
+  post: DEFAULT_SHIPPING_MINOR,
+  courier: COURIER_SHIPPING_MINOR,
+};
+
+function qualifiesForFreeShipping(afterDiscountMinor: number) {
+  return afterDiscountMinor >= FREE_SHIPPING_THRESHOLD_MINOR;
+}
+
+export function getShippingMinorForMethod(
+  method: CheckoutShippingMethod,
+  afterDiscountMinor: number,
+): number {
+  if (qualifiesForFreeShipping(afterDiscountMinor)) return 0;
+  return SHIPPING_FEES_BY_METHOD[method];
+}
+
+export function getOrderTotalMinor(
+  afterDiscountMinor: number,
+  method: CheckoutShippingMethod,
+): number {
+  return afterDiscountMinor + getShippingMinorForMethod(method, afterDiscountMinor);
+}
 
 export type CartTotals = {
   subtotalMinor: number;
