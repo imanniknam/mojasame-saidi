@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { StoreCategory, StoreProduct } from "@/lib/storefront/types";
 
@@ -15,28 +16,15 @@ const productSelect = {
   isBestSeller: true,
   category: { select: { slug: true, nameFa: true } },
   images: {
-    orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
+    orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
     select: { url: true, altFa: true },
   },
   inventory: {
     select: { quantityOnHand: true, quantityReserved: true },
   },
-} as const;
+} satisfies Prisma.ProductSelect;
 
-type DbProduct = {
-  id: string;
-  slug: string;
-  titleFa: string;
-  descriptionFa: string;
-  priceMinor: number;
-  compareAtMinor: number | null;
-  isFeatured: boolean;
-  isNew: boolean;
-  isBestSeller: boolean;
-  category: { slug: string; nameFa: string };
-  images: { url: string; altFa: string }[];
-  inventory: { quantityOnHand: number; quantityReserved: number } | null;
-};
+type DbProduct = Prisma.ProductGetPayload<{ select: typeof productSelect }>;
 
 function mapProduct(product: DbProduct): StoreProduct {
   const available =
