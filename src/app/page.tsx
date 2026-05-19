@@ -5,6 +5,7 @@ import { CategoryCard } from "@/components/store/category-card";
 import { ProductCard } from "@/components/store/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPriceFa } from "@/lib/format";
+import { SITE_DOMAIN_LABEL } from "@/lib/constants/site";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   listFeaturedProducts,
@@ -69,7 +70,7 @@ export default async function RootPage() {
             <div className="flex flex-col justify-center rounded-[1.5rem] border border-border/60 bg-card/45 p-5 shadow-elegant backdrop-blur-sm sm:p-7">
               <div className="mb-6 flex items-center gap-2">
                 <span className="h-px w-10 bg-highlight/70" />
-                <p className="ds-overline text-highlight">MojasameSaidi.ir</p>
+                <p className="ds-overline text-highlight">{SITE_DOMAIN_LABEL}</p>
               </div>
               <h1 className="ds-display max-w-xl text-balance text-[2.35rem] text-foreground sm:text-5xl">
                 مجسمه‌های دست‌ساز برای خانه‌های خاص

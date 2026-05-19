@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
         hostname: "mojasamesaidi.ir",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "www.mojasamesaidi.ir",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
   },
   async headers() {

@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { SITE_DOMAIN_LABEL } from "@/lib/constants/site";
 import { NAV_CATEGORIES } from "@/lib/constants/nav-categories";
 import { useNavigation } from "@/components/layout/navigation-context";
 
@@ -237,7 +238,7 @@ export function SiteHeader({
             className="flex min-h-touch min-w-0 flex-col justify-center rounded-xl px-1 py-0.5 text-start transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <span className="truncate text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-highlight sm:text-[0.65rem]">
-              MojasameSaidi.ir
+              {SITE_DOMAIN_LABEL}
             </span>
             <span className="truncate text-sm font-bold leading-tight text-foreground sm:text-base">
               مجسمه‌سازی سعیدی

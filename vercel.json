@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.mojasamesaidi.ir" }],
+      "destination": "https://mojasamesaidi.ir/:path*",
+      "permanent": true
+    }
+  ]
+}

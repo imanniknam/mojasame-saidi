@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_DOMAIN, SITE_NAME_FA } from "@/lib/constants/site";
+import { SITE_DOMAIN_LABEL, SITE_HOST, SITE_NAME_FA, SITE_URL } from "@/lib/constants/site";
 import type { StoreProduct } from "@/lib/storefront/types";
 
 type BuildMetadataInput = {
@@ -15,7 +15,9 @@ export const DEFAULT_SEO_DESCRIPTION =
   "خرید مجسمه، گلدان، تندیس و دکور دست‌ساز از فروشگاه مجسمه‌سازی سعیدی با طراحی هنری، کیفیت بالا و ارسال مطمئن.";
 
 export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://mojasamesaidi.ir";
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  return SITE_URL;
 }
 
 export function absoluteUrl(path = "/") {
@@ -132,7 +134,7 @@ export function buildOrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_NAME_FA,
-    alternateName: SITE_DOMAIN,
+    alternateName: [SITE_DOMAIN_LABEL, SITE_HOST],
     url: absoluteUrl("/"),
     logo: absoluteUrl("/images/og-default.svg"),
   };
