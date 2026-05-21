@@ -1,24 +1,14 @@
-import { Suspense } from "react";
-import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
-import { buildPageMetadata } from "@/lib/seo/metadata";
+import { redirect } from "next/navigation";
 
-export const metadata = buildPageMetadata({
-  title: "تنظیم رمز جدید",
-  description: "تنظیم رمز عبور جدید برای حساب فروشگاه مجسمه‌سازی سعیدی.",
-  path: "/reset-password",
-  noIndex: true,
-});
+type ResetPasswordRedirectProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default function ResetPasswordPage() {
-  return (
-    <main className="ds-section flex min-h-dvh items-center pb-24">
-      <Suspense
-        fallback={
-          <p className="mx-auto text-sm text-muted-foreground">در حال بارگذاری...</p>
-        }
-      >
-        <ResetPasswordPanel />
-      </Suspense>
-    </main>
-  );
+/** @deprecated Use /login/reset — kept for old email links */
+export default async function ResetPasswordRedirectPage({
+  searchParams,
+}: ResetPasswordRedirectProps) {
+  const params = await searchParams;
+  const token = typeof params.token === "string" ? params.token : undefined;
+  redirect(token ? `/login/reset?token=${encodeURIComponent(token)}` : "/login/forgot");
 }

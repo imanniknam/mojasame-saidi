@@ -270,7 +270,7 @@ function InvalidResetCard({
       <Card elevated className="space-y-4 border-highlight/15 p-6 text-center shadow-elegant sm:p-8">
         <p className="text-sm leading-7 text-muted-foreground">{message}</p>
         <Button variant="luxury" size="touch" asChild>
-          <Link href="/forgot-password">درخواست لینک جدید</Link>
+          <Link href="/login/forgot">درخواست لینک جدید</Link>
         </Button>
         <p className="text-sm">
           <Link href="/login" className="font-semibold text-highlight hover:underline">

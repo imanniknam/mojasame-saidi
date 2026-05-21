@@ -29,6 +29,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/forgot-password",
+        destination: "/login/forgot",
+        permanent: true,
+      },
+      {
+        source: "/reset-password",
+        destination: "/login/reset",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
