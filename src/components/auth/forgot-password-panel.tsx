@@ -8,16 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { readAuthResponse } from "@/lib/auth/client";
+import { requestForgotPasswordAction } from "@/lib/auth/forgot-password-action";
 import { cn } from "@/lib/utils";
 
 type ForgotPasswordPanelProps = {
   className?: string;
-};
-
-type ForgotSuccessPayload = {
-  message?: string;
-  devResetUrl?: string;
 };
 
 export function ForgotPasswordPanel({ className }: ForgotPasswordPanelProps) {
@@ -36,29 +31,14 @@ export function ForgotPasswordPanel({ className }: ForgotPasswordPanelProps) {
     const formData = new FormData(event.currentTarget);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: String(formData.get("email") ?? ""),
-        }),
-      });
+      const result = await requestForgotPasswordAction(String(formData.get("email") ?? ""));
 
-      const result = await readAuthResponse<ForgotSuccessPayload>(response);
-
-      if (!response.ok || !result.ok) {
-        setError(
-          !result.ok && result.error?.message
-            ? result.error.message
-            : "ارسال لینک بازیابی با خطا روبه‌رو شد.",
-        );
+      if (!result.ok) {
+        setError(result.message);
         return;
       }
 
-      setMessage(
-        result.message ??
-          "اگر ایمیل در سیستم ثبت شده باشد، لینک بازیابی برای شما ارسال می‌شود.",
-      );
+      setMessage(result.message);
 
       if ("devResetUrl" in result && result.devResetUrl) {
         setDevResetUrl(result.devResetUrl);
@@ -148,7 +128,10 @@ export function ForgotPasswordPanel({ className }: ForgotPasswordPanelProps) {
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-semibold text-highlight hover:underline">
+          <Link
+            href="/login"
+            className="font-semibold text-highlight hover:underline"
+          >
             بازگشت به ورود
           </Link>
         </p>

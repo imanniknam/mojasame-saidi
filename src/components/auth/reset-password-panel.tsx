@@ -9,16 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { readAuthResponse } from "@/lib/auth/client";
+import {
+  resetPasswordAction,
+  validateResetTokenAction,
+} from "@/lib/auth/forgot-password-action";
 import { cn } from "@/lib/utils";
 
 type ResetPasswordPanelProps = {
   className?: string;
-};
-
-type ResetSuccessPayload = {
-  message?: string;
-  redirectTo?: string;
 };
 
 export function ResetPasswordPanel({ className }: ResetPasswordPanelProps) {
@@ -54,13 +52,9 @@ export function ResetPasswordPanel({ className }: ResetPasswordPanelProps) {
 
     async function validate() {
       try {
-        const response = await fetch(
-          `/api/auth/reset-password?token=${encodeURIComponent(token)}`,
-          { cache: "no-store" },
-        );
-        const result = await readAuthResponse<{ valid?: boolean }>(response);
+        const result = await validateResetTokenAction(token);
         if (!cancelled) {
-          setTokenValid(Boolean(response.ok && result.ok && "valid" in result && result.valid));
+          setTokenValid(result.valid);
         }
       } catch {
         if (!cancelled) setTokenValid(false);
@@ -84,30 +78,19 @@ export function ResetPasswordPanel({ className }: ResetPasswordPanelProps) {
     const formData = new FormData(event.currentTarget);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          password: String(formData.get("password") ?? ""),
-          confirmPassword: String(formData.get("confirmPassword") ?? ""),
-        }),
+      const result = await resetPasswordAction({
+        token,
+        password: String(formData.get("password") ?? ""),
+        confirmPassword: String(formData.get("confirmPassword") ?? ""),
       });
 
-      const result = await readAuthResponse<ResetSuccessPayload>(response);
-
-      if (!response.ok || !result.ok) {
-        setError(
-          !result.ok && result.error?.message
-            ? result.error.message
-            : "تغییر رمز با خطا روبه‌رو شد.",
-        );
+      if (!result.ok) {
+        setError(result.message);
         return;
       }
 
-      setMessage(result.message ?? "رمز عبور با موفقیت تغییر کرد.");
-      const redirectTo =
-        "redirectTo" in result && result.redirectTo ? result.redirectTo : "/login";
+      setMessage(result.message);
+      const redirectTo = result.redirectTo ?? "/login";
 
       window.setTimeout(() => {
         router.push(redirectTo);
@@ -270,7 +253,7 @@ function InvalidResetCard({
       <Card elevated className="space-y-4 border-highlight/15 p-6 text-center shadow-elegant sm:p-8">
         <p className="text-sm leading-7 text-muted-foreground">{message}</p>
         <Button variant="luxury" size="touch" asChild>
-          <Link href="/login/forgot">درخواست لینک جدید</Link>
+          <Link href="/login?forgot=1">درخواست لینک جدید</Link>
         </Button>
         <p className="text-sm">
           <Link href="/login" className="font-semibold text-highlight hover:underline">

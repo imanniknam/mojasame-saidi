@@ -10,7 +10,7 @@ type SendPasswordResetInput = {
 };
 
 export function buildPasswordResetUrl(token: string) {
-  const url = new URL("/login/reset", getSiteUrl());
+  const url = new URL("/login", getSiteUrl());
   url.searchParams.set("token", token);
   return url.toString();
 }

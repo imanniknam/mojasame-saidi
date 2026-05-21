@@ -214,14 +214,14 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
               <Label htmlFor={`${mode}-login-password`}>رمز عبور</Label>
               {mode === "customer" ? (
                 <Link
-                  href="/login/forgot"
+                  href="/login?forgot=1"
                   className="text-xs font-semibold text-highlight hover:underline"
                 >
                   فراموشی رمز؟
                 </Link>
               ) : (
                 <Link
-                  href="/login/forgot"
+                  href="/login?forgot=1"
                   className="text-xs font-semibold text-highlight hover:underline"
                 >
                   بازیابی رمز مدیر

@@ -33,13 +33,23 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/forgot-password",
-        destination: "/login/forgot",
-        permanent: true,
+        destination: "/login?forgot=1",
+        permanent: false,
+      },
+      {
+        source: "/login/forgot",
+        destination: "/login?forgot=1",
+        permanent: false,
       },
       {
         source: "/reset-password",
-        destination: "/login/reset",
-        permanent: true,
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/login/reset",
+        destination: "/login",
+        permanent: false,
       },
     ];
   },
