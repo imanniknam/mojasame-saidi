@@ -130,6 +130,58 @@ export async function listProductsByCategorySlug(slug: string): Promise<StorePro
   return rows.map(mapProduct);
 }
 
+const MIN_SEARCH_LENGTH = 2;
+const MAX_SEARCH_RESULTS = 48;
+
+export function normalizeSearchQuery(raw: string | undefined | null): string {
+  return (raw ?? "").trim().replace(/\s+/g, " ");
+}
+
+export function isSearchQueryValid(query: string): boolean {
+  return query.length >= MIN_SEARCH_LENGTH;
+}
+
+function buildProductSearchWhere(query: string): Prisma.ProductWhereInput {
+  return {
+    isActive: true,
+    OR: [
+      { titleFa: { contains: query, mode: "insensitive" } },
+      { descriptionFa: { contains: query, mode: "insensitive" } },
+      { slug: { contains: query, mode: "insensitive" } },
+      { sku: { contains: query, mode: "insensitive" } },
+      { metaTitleFa: { contains: query, mode: "insensitive" } },
+      { metaDescFa: { contains: query, mode: "insensitive" } },
+      { category: { isActive: true, nameFa: { contains: query, mode: "insensitive" } } },
+    ],
+  };
+}
+
+export async function searchStoreProducts(rawQuery: string) {
+  const query = normalizeSearchQuery(rawQuery);
+
+  if (!isSearchQueryValid(query)) {
+    return { query, products: [] as StoreProduct[], total: 0 };
+  }
+
+  const where = buildProductSearchWhere(query);
+
+  const [rows, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: [{ isFeatured: "desc" }, { isBestSeller: "desc" }, { titleFa: "asc" }],
+      take: MAX_SEARCH_RESULTS,
+      select: productSelect,
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  return {
+    query,
+    products: rows.map(mapProduct),
+    total,
+  };
+}
+
 export async function getRelatedStoreProducts(
   product: StoreProduct,
   limit = 4,
