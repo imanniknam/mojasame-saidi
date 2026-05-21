@@ -56,3 +56,18 @@ export function safeNextPath(next: string | null | undefined, fallback: string) 
   }
   return fallback;
 }
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("ایمیل معتبر نیست.").max(160),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(20, "لینک بازیابی نامعتبر است."),
+    password: z.string().min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد.").max(128),
+    confirmPassword: z.string().min(8, "تکرار رمز عبور را وارد کنید.").max(128),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "رمز عبور و تکرار آن یکسان نیستند.",
+    path: ["confirmPassword"],
+  });

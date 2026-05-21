@@ -212,12 +212,21 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
           <div className="space-y-2 text-start">
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor={`${mode}-login-password`}>رمز عبور</Label>
-              <Link
-                href="/forgot-password"
-                className="text-xs font-semibold text-highlight hover:underline"
-              >
-                فراموشی رمز؟
-              </Link>
+              {mode === "customer" ? (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-highlight hover:underline"
+                >
+                  فراموشی رمز؟
+                </Link>
+              ) : (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-highlight hover:underline"
+                >
+                  بازیابی رمز مدیر
+                </Link>
+              )}
             </div>
             <div className="relative">
               <LockKeyhole
