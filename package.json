@@ -13,6 +13,7 @@
     "db:check": "node scripts/check-db.mjs",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:baseline": "powershell -ExecutionPolicy Bypass -File scripts/baseline-migrations.ps1",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:seed": "tsx prisma/seed.ts",
