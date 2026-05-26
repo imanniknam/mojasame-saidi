@@ -17,6 +17,8 @@ const badgeVariants = cva(
           "border-transparent bg-accent text-accent-foreground shadow-elegant",
         highlight:
           "border-transparent bg-highlight text-highlight-foreground shadow-elegant",
+        luxury:
+          "border-highlight/30 bg-gradient-to-b from-highlight to-highlight/75 text-highlight-foreground shadow-elegant",
         success:
           "border-emerald-200/80 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100",
         destructive:
