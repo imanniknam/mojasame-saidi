@@ -42,8 +42,7 @@ export default async function ProfilePage() {
   const customer = user.customer;
   const fullName =
     customer?.displayFa ??
-    [customer?.firstName, customer?.lastName].filter(Boolean).join(" ") ||
-    null;
+    ([customer?.firstName, customer?.lastName].filter(Boolean).join(" ") || null);
 
   const memberSince = new Intl.DateTimeFormat("fa-IR", {
     year: "numeric",
