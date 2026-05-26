@@ -345,11 +345,6 @@ async function main() {
     update: { status: "PAID" },
   });
 
-  await prisma.order.upsert({
-    where: { orderNumber: order.orderNumber },
-    create: {},
-    update: {},
-  });
 
   console.info("Seed OK:", {
     categories: CATEGORIES.length,
