@@ -10,5 +10,5 @@ export default async function ForgotPasswordRedirectPage({
 }: ForgotPasswordRedirectProps) {
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : undefined;
-  redirect(q ? `/login/forgot?q=${encodeURIComponent(q)}` : "/login/forgot");
+  redirect(q ? `/login?forgot=1&q=${encodeURIComponent(q)}` : "/login?forgot=1");
 }

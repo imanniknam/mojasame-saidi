@@ -15,7 +15,7 @@ export type CheckoutAddressInput = {
   phone: string;
   province: string;
   city: string;
-  postalCode?: string;
+  postalCode: string;
   addressLine: string;
   notes?: string;
 };
@@ -152,7 +152,7 @@ export async function createStoreOrder(input: CreateOrderInput) {
     phone: input.address.phone,
     provinceFa: input.address.province,
     cityFa: input.address.city,
-    postalCode: input.address.postalCode ?? null,
+    postalCode: input.address.postalCode,
     line1: input.address.addressLine,
     notes: input.address.notes ?? null,
     method: input.shipping,

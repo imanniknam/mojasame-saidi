@@ -77,9 +77,10 @@ const shippingOptions: Record<
     feeMinor: 145_000,
   },
   pickup: {
-    title: "هماهنگی تلفنی",
-    description: "ارسال پس از تماس پشتیبانی",
-    eta: "با هماهنگی",
+    title: "هماهنگی تلفنی (تماس پشتیبانی)",
+    description:
+      "پس از ثبت سفارش، کارشناس ما با شماره موبایلی که وارد کرده‌اید تماس می‌گیرد و هزینه ارسال، زمان و روش تحویل را هماهنگ می‌کند",
+    eta: "طبق تماس تیم پشتیبانی",
     feeMinor: 0,
   },
 };
@@ -117,7 +118,9 @@ function validateAddress(values: AddressValues): FieldErrors {
   if (values.city.trim().length < 2) {
     errors.city = "شهر را وارد کنید.";
   }
-  if (postalCode && !/^\d{10}$/.test(postalCode)) {
+  if (!postalCode || postalCode.length === 0) {
+    errors.postalCode = "کد پستی الزامی است.";
+  } else if (!/^\d{10}$/.test(postalCode)) {
     errors.postalCode = "کد پستی باید ۱۰ رقم باشد.";
   }
   if (values.addressLine.trim().length < 12) {
@@ -428,7 +431,7 @@ export function CheckoutFlow() {
                     </div>
 
                     <div className="space-y-2 text-start">
-                      <Label htmlFor="postalCode">کد پستی (اختیاری)</Label>
+                      <Label htmlFor="postalCode">کد پستی</Label>
                       <Input
                         id="postalCode"
                         value={address.postalCode}

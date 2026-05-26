@@ -33,7 +33,7 @@ export const storeCheckoutSchema = z.object({
     phone: phoneSchema,
     province: z.string().trim().min(2, "استان را وارد کنید."),
     city: z.string().trim().min(2, "شهر را وارد کنید."),
-    postalCode: z.string().trim().optional(),
+    postalCode: z.string().trim().min(10, "کد پستی الزامی و ۱۰ رقمی است.").max(10, "کد پستی باید ۱۰ رقم باشد."),
     addressLine: z.string().trim().min(8, "آدرس را دقیق‌تر وارد کنید."),
     notes: z.string().trim().optional(),
   }),

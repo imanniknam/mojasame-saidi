@@ -358,7 +358,7 @@ export function CheckoutWizard() {
                   />
                 </div>
                 <div className="space-y-2 text-start">
-                  <Label htmlFor="postal">کدپستی (اختیاری)</Label>
+                  <Label htmlFor="postal">کدپستی</Label>
                   <Input
                     id="postal"
                     value={address.postalCode ?? ""}

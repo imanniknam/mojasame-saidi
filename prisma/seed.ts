@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -299,7 +300,7 @@ async function main() {
     update: {},
   });
 
-  await prisma.order.upsert({
+  const order = await prisma.order.upsert({
     where: { orderNumber: "MS-100001" },
     create: {
       orderNumber: "MS-100001",
@@ -342,6 +343,12 @@ async function main() {
       },
     },
     update: { status: "PAID" },
+  });
+
+  await prisma.order.upsert({
+    where: { orderNumber: order.orderNumber },
+    create: {},
+    update: {},
   });
 
   console.info("Seed OK:", {

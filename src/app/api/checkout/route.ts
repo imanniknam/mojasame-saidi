@@ -33,8 +33,13 @@ const ERROR_MESSAGES: Record<string, { code: string; message: string; status: nu
   ZARINPAL_NOT_CONFIGURED: {
     code: "ZARINPAL_NOT_CONFIGURED",
     message:
-      "درگاه زرین‌پال تنظیم نشده است. ZARINPAL_MERCHANT_ID را در فایل .env وارد کنید.",
+      "درگاه پرداخت آنلاین فعال نیست. لطفاً روش «کارت به کارت» را انتخاب کنید یا بعداً دوباره تلاش کنید.",
     status: 503,
+  },
+  PAYMENT_NOT_FOUND: {
+    code: "PAYMENT_NOT_FOUND",
+    message: "رکورد پرداخت یافت نشد. لطفاً دوباره تلاش کنید.",
+    status: 500,
   },
 };
 
@@ -68,21 +73,42 @@ export async function POST(request: Request) {
     };
 
     if (body.payment === "online") {
-      const gateway = await startZarinpalPaymentForOrder({
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        amountMinor: order.totalMinor,
-        mobile: body.address.phone,
-        email: sessionUser?.email,
-      });
+      try {
+        const gateway = await startZarinpalPaymentForOrder({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          amountMinor: order.totalMinor,
+          mobile: body.address.phone,
+          email: sessionUser?.email,
+        });
 
-      return jsonNoStore({
-        ...basePayload,
-        payment: {
-          provider: "ZARINPAL" as const,
-          gatewayUrl: gateway.gatewayUrl,
-        },
-      });
+        return jsonNoStore({
+          ...basePayload,
+          payment: {
+            provider: "ZARINPAL" as const,
+            gatewayUrl: gateway.gatewayUrl,
+          },
+        });
+      } catch (gatewayError) {
+        const msg = gatewayError instanceof Error ? gatewayError.message : "";
+        const mapped = ERROR_MESSAGES[msg];
+        if (mapped) {
+          return jsonNoStore(
+            { ok: false, error: { code: mapped.code, message: mapped.message } },
+            { status: mapped.status },
+          );
+        }
+        return jsonNoStore(
+          {
+            ok: false,
+            error: {
+              code: "GATEWAY_ERROR",
+              message: `خطا در اتصال به درگاه پرداخت زرین‌پال: ${msg || "لطفاً دوباره تلاش کنید."}`,
+            },
+          },
+          { status: 502 },
+        );
+      }
     }
 
     return jsonNoStore({

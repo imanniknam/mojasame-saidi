@@ -10,5 +10,5 @@ export default async function ResetPasswordRedirectPage({
 }: ResetPasswordRedirectProps) {
   const params = await searchParams;
   const token = typeof params.token === "string" ? params.token : undefined;
-  redirect(token ? `/login/reset?token=${encodeURIComponent(token)}` : "/login/forgot");
+  redirect(token ? `/login?token=${encodeURIComponent(token)}` : "/login?forgot=1");
 }

@@ -27,7 +27,11 @@ export const checkoutAddressSchema = z.object({
     .min(8, "آدرس را دقیق‌تر وارد کنید."),
   plaque: z.string().trim().max(30).optional().or(z.literal("")),
   unit: z.string().trim().max(20).optional().or(z.literal("")),
-  postalCode: z.string().trim().max(12).optional().or(z.literal("")),
+  postalCode: z
+    .string({ required_error: "کد پستی را وارد کنید." })
+    .trim()
+    .min(10, "کد پستی باید ۱۰ رقم باشد.")
+    .max(10, "کد پستی باید ۱۰ رقم باشد."),
 });
 
 export type CheckoutAddress = z.infer<typeof checkoutAddressSchema>;
