@@ -234,6 +234,7 @@ export function CheckoutFlow() {
         body: JSON.stringify({
           lines: lines.map((line) => ({
             productId: line.productId,
+            variantId: line.variantId,
             quantity: line.quantity,
             unitMinor: line.unitMinor,
           })),

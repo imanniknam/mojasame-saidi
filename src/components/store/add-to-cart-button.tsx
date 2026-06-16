@@ -9,6 +9,8 @@ import { useCartHydration } from "@/hooks/use-cart-hydration";
 
 type AddToCartButtonProps = {
   productId: string;
+  variantId?: string;
+  variantNameFa?: string;
   titleFa: string;
   priceMinor: number;
   imageUrl: string;
@@ -17,6 +19,8 @@ type AddToCartButtonProps = {
 
 export function AddToCartButton({
   productId,
+  variantId,
+  variantNameFa,
   titleFa,
   priceMinor,
   imageUrl,
@@ -30,11 +34,21 @@ export function AddToCartButton({
     setAdding(true);
     try {
       const { lines, addLine, setQuantity } = useCartStore.getState();
-      const existing = lines.find((line) => line.productId === productId);
+      const existing = lines.find(
+        (line) => line.productId === productId && line.variantId === variantId,
+      );
       if (existing) {
         setQuantity(existing.id, existing.quantity + 1);
       } else {
-        addLine({ productId, titleFa, unitMinor: priceMinor, quantity: 1, imageUrl });
+        addLine({
+          productId,
+          variantId,
+          variantNameFa,
+          titleFa,
+          unitMinor: priceMinor,
+          quantity: 1,
+          imageUrl,
+        });
       }
     } finally {
       window.setTimeout(() => setAdding(false), 400);

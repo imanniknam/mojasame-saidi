@@ -25,6 +25,7 @@ export function emptyProductFormValues(categoryId = ""): ProductFormValues {
       lowStockThreshold: 3,
     },
     images: [],
+    variants: [],
   };
 }
 
@@ -56,6 +57,15 @@ export function productToFormValues(product: ProductRecord): ProductFormValues {
       altFa: img.altFa,
       sortOrder: img.sortOrder ?? index,
       isPrimary: img.isPrimary,
+    })),
+    variants: (product.variants ?? []).map((v, index) => ({
+      id: v.id,
+      nameFa: v.nameFa,
+      sku: v.sku ?? "",
+      priceMinor: v.priceMinor,
+      compareAtMinor: v.compareAtMinor,
+      isActive: v.isActive,
+      sortOrder: v.sortOrder ?? index,
     })),
   };
 }

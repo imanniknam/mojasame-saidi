@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
-import { Wand2 } from "lucide-react";
+import { Plus, Trash2, Wand2 } from "lucide-react";
 import {
   AdminProductImagesField,
   type ProductImageFieldValue,
@@ -24,6 +24,16 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export type CategoryOption = { id: string; nameFa: string; slug: string };
+
+export type ProductVariantFormValue = {
+  id?: string;
+  nameFa: string;
+  sku: string;
+  priceMinor: number;
+  compareAtMinor: number | null;
+  isActive: boolean;
+  sortOrder: number;
+};
 
 export type ProductFormValues = {
   id?: string;
@@ -47,6 +57,7 @@ export type ProductFormValues = {
     lowStockThreshold: number;
   };
   images: ProductImageFieldValue[];
+  variants: ProductVariantFormValue[];
 };
 
 type AdminProductFormProps = {
@@ -105,6 +116,28 @@ export function AdminProductForm({ mode, categories, initial }: AdminProductForm
   const [slug, setSlug] = useState(initial.slug);
   const [titleFa, setTitleFa] = useState(initial.titleFa);
   const [images, setImages] = useState<ProductImageFieldValue[]>(initial.images);
+  const [variants, setVariants] = useState<ProductVariantFormValue[]>(initial.variants);
+
+  function addVariant() {
+    setVariants((prev) => [
+      ...prev,
+      { nameFa: "", sku: "", priceMinor: 0, compareAtMinor: null, isActive: true, sortOrder: prev.length },
+    ]);
+  }
+
+  function removeVariant(index: number) {
+    setVariants((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateVariant<K extends keyof ProductVariantFormValue>(
+    index: number,
+    key: K,
+    value: ProductVariantFormValue[K],
+  ) {
+    setVariants((prev) =>
+      prev.map((v, i) => (i === index ? { ...v, [key]: value } : v)),
+    );
+  }
 
   useEffect(() => {
     if (state.message && state.ok && mode === "edit") {
@@ -125,6 +158,7 @@ export function AdminProductForm({ mode, categories, initial }: AdminProductForm
   return (
     <form action={formAction} className="mx-auto max-w-4xl space-y-6">
       <input type="hidden" name="imagesJson" value={JSON.stringify(images)} />
+      <input type="hidden" name="variantsJson" value={JSON.stringify(variants)} />
 
       {state.fieldErrors?._form ? (
         <Card className="border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
@@ -269,6 +303,78 @@ export function AdminProductForm({ mode, categories, initial }: AdminProductForm
             />
           </div>
         </div>
+      </Card>
+
+      <Card elevated className="space-y-5 rounded-2xl p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-foreground">سایزها / متغیرها</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              اگر این محصول در سایزهای مختلف با قیمت‌های متفاوت موجود است، اینجا تعریف کنید.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addVariant} className="shrink-0">
+            <Plus className="size-4" />
+            افزودن سایز
+          </Button>
+        </div>
+
+        {variants.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+            سایزی تعریف نشده — این محصول یک قیمت ثابت دارد.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {variants.map((variant, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 rounded-xl border border-border/60 bg-card/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
+              >
+                <div className="space-y-1.5">
+                  <Label className="text-xs">نام سایز *</Label>
+                  <Input
+                    value={variant.nameFa}
+                    onChange={(e) => updateVariant(index, "nameFa", e.target.value)}
+                    placeholder="مثلاً: کوچک"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">قیمت (تومان) *</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={variant.priceMinor || ""}
+                    onChange={(e) => updateVariant(index, "priceMinor", Number(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="hidden space-y-1.5 sm:block">
+                  <Label className="text-xs">قیمت قبل از تخفیف</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={variant.compareAtMinor ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      updateVariant(index, "compareAtMinor", v ? Number(v) : null);
+                    }}
+                    placeholder="اختیاری"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => removeVariant(index)}
+                  aria-label="حذف سایز"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card elevated className="space-y-5 rounded-2xl p-5 sm:p-6">

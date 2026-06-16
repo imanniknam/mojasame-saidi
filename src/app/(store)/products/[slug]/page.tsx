@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProductCard } from "@/components/store/product-card";
-import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { ProductBuyBox } from "@/components/store/product-buy-box";
 import { JsonLd } from "@/components/seo/json-ld";
 import { formatPriceFa } from "@/lib/format";
 import { IMAGE_SIZES } from "@/lib/images";
@@ -37,8 +37,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   const related = await getRelatedStoreProducts(product);
-  const hasDiscount =
-    product.compareAtMinor != null && product.compareAtMinor > product.priceMinor;
 
   return (
     <>
@@ -87,28 +85,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <p className="ds-body text-muted-foreground">{product.descriptionFa}</p>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-elegant">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">قیمت محصول</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-highlight">
-                    {formatPriceFa(product.priceMinor)}
-                  </p>
-                </div>
-                {hasDiscount ? (
-                  <p className="text-sm text-muted-foreground line-through tabular-nums">
-                    {formatPriceFa(product.compareAtMinor!)}
-                  </p>
-                ) : null}
-              </div>
-              <AddToCartButton
-                productId={product.id}
-                titleFa={product.titleFa}
-                priceMinor={product.priceMinor}
-                imageUrl={product.imageUrl}
-                inStock={product.inStock}
-              />
-            </div>
+            <ProductBuyBox
+              productId={product.id}
+              titleFa={product.titleFa}
+              priceMinor={product.priceMinor}
+              compareAtMinor={product.compareAtMinor}
+              imageUrl={product.imageUrl}
+              inStock={product.inStock}
+              variants={product.variants}
+            />
 
             {product.specs.length ? (
               <section className="space-y-3">

@@ -23,6 +23,18 @@ export const productImageSchema = z.object({
   isPrimary: z.boolean().default(false),
 });
 
+export const productVariantSchema = z.object({
+  id: z.string().optional(),
+  nameFa: z.string().trim().min(1, "نام سایز الزامی است").max(80),
+  sku: z.string().trim().max(80).optional().nullable(),
+  priceMinor: z.coerce.number().int().min(0),
+  compareAtMinor: z.coerce.number().int().min(0).optional().nullable(),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+
+export type ProductVariantInput = z.infer<typeof productVariantSchema>;
+
 export const productCreateSchema = z.object({
   slug: slugSchema,
   sku: z.string().trim().max(80).optional().nullable(),
@@ -46,6 +58,7 @@ export const productCreateSchema = z.object({
     })
     .default({ quantityOnHand: 0, quantityReserved: 0, lowStockThreshold: 3 }),
   images: z.array(productImageSchema).max(12).default([]),
+  variants: z.array(productVariantSchema).default([]),
 });
 
 export const productUpdateSchema = productCreateSchema.partial();

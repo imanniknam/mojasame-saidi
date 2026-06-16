@@ -22,6 +22,11 @@ const productSelect = {
   inventory: {
     select: { quantityOnHand: true, quantityReserved: true },
   },
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }],
+    select: { id: true, nameFa: true, priceMinor: true, compareAtMinor: true },
+  },
 } satisfies Prisma.ProductSelect;
 
 type DbProduct = Prisma.ProductGetPayload<{ select: typeof productSelect }>;
@@ -53,6 +58,12 @@ function mapProduct(product: DbProduct): StoreProduct {
     isFeatured: product.isFeatured,
     isBestSeller: product.isBestSeller,
     isNew: product.isNew,
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      nameFa: v.nameFa,
+      priceMinor: v.priceMinor,
+      compareAtMinor: v.compareAtMinor ?? undefined,
+    })),
   };
 }
 

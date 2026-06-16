@@ -139,6 +139,11 @@ export function CartPageContent() {
                         >
                           {line.titleFa}
                         </Link>
+                        {line.variantNameFa ? (
+                          <p className="text-xs font-medium text-highlight/80">
+                            سایز: {line.variantNameFa}
+                          </p>
+                        ) : null}
                         <p className="text-sm tabular-nums text-muted-foreground">
                           واحد: {formatPriceFa(line.unitMinor)}
                         </p>

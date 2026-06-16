@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export type CheckoutLineInput = {
   productId: string;
+  variantId?: string;
   quantity: number;
   unitMinor: number;
 };
@@ -89,19 +90,32 @@ export async function createStoreOrder(input: CreateOrderInput) {
   }
 
   const productIds = [...new Set(input.lines.map((line) => line.productId))];
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds }, isActive: true },
-    include: {
-      inventory: true,
-      category: { select: { slug: true } },
-    },
-  });
+  const variantIds = input.lines
+    .map((l) => l.variantId)
+    .filter((id): id is string => !!id);
+
+  const [products, variants] = await Promise.all([
+    prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+      include: {
+        inventory: true,
+        category: { select: { slug: true } },
+      },
+    }),
+    variantIds.length > 0
+      ? prisma.productVariant.findMany({
+          where: { id: { in: variantIds }, isActive: true },
+          select: { id: true, productId: true, priceMinor: true, nameFa: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   if (products.length !== productIds.length) {
     throw new Error("PRODUCT_NOT_FOUND");
   }
 
   const productMap = new Map(products.map((product) => [product.id, product]));
+  const variantMap = new Map(variants.map((v) => [v.id, v]));
 
   const pricedLines = input.lines.map((line) => {
     const product = productMap.get(line.productId);
@@ -114,14 +128,28 @@ export async function createStoreOrder(input: CreateOrderInput) {
       throw new Error("INSUFFICIENT_STOCK");
     }
 
-    if (line.unitMinor !== product.priceMinor) {
+    let unitPriceMinor = product.priceMinor;
+    let variantNameFaSnap: string | undefined;
+
+    if (line.variantId) {
+      const variant = variantMap.get(line.variantId);
+      if (!variant || variant.productId !== product.id) {
+        throw new Error("VARIANT_NOT_FOUND");
+      }
+      unitPriceMinor = variant.priceMinor;
+      variantNameFaSnap = variant.nameFa;
+    }
+
+    if (line.unitMinor !== unitPriceMinor) {
       throw new Error("PRICE_MISMATCH");
     }
 
     return {
       productId: product.id,
+      variantId: line.variantId,
+      variantNameFaSnap,
       quantity: line.quantity,
-      unitPriceMinor: product.priceMinor,
+      unitPriceMinor,
       titleFaSnap: product.titleFa,
       skuSnap: product.sku,
     };
@@ -198,6 +226,8 @@ export async function createStoreOrder(input: CreateOrderInput) {
             items: {
               create: pricedLines.map((line) => ({
                 productId: line.productId,
+                variantId: line.variantId ?? null,
+                variantNameFaSnap: line.variantNameFaSnap ?? null,
                 quantity: line.quantity,
                 unitPriceMinor: line.unitPriceMinor,
                 titleFaSnap: line.titleFaSnap,

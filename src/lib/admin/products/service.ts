@@ -6,6 +6,7 @@ export const productDetailInclude = {
   category: { select: { id: true, nameFa: true, slug: true } },
   inventory: true,
   images: { orderBy: [{ sortOrder: "asc" as const }] },
+  variants: { where: { isActive: true }, orderBy: [{ sortOrder: "asc" as const }] },
 } satisfies Prisma.ProductInclude;
 
 export async function createProductRecord(input: ProductCreateInput) {
@@ -32,6 +33,16 @@ export async function createProductRecord(input: ProductCreateInput) {
           altFa: image.altFa,
           sortOrder: image.sortOrder ?? index,
           isPrimary: image.isPrimary || index === 0,
+        })),
+      },
+      variants: {
+        create: (input.variants ?? []).map((v, index) => ({
+          nameFa: v.nameFa,
+          sku: v.sku || null,
+          priceMinor: v.priceMinor,
+          compareAtMinor: v.compareAtMinor ?? null,
+          isActive: v.isActive ?? true,
+          sortOrder: v.sortOrder ?? index,
         })),
       },
     },
@@ -81,6 +92,24 @@ export async function updateProductRecord(id: string, input: ProductUpdateInput)
             altFa: image.altFa,
             sortOrder: image.sortOrder ?? index,
             isPrimary: image.isPrimary || index === 0,
+          })),
+        });
+      }
+    }
+
+    if (input.variants !== undefined) {
+      // حذف همه variant های قدیمی و ایجاد مجدد
+      await tx.productVariant.deleteMany({ where: { productId: id } });
+      if (input.variants.length > 0) {
+        await tx.productVariant.createMany({
+          data: input.variants.map((v, index) => ({
+            productId: id,
+            nameFa: v.nameFa,
+            sku: v.sku || null,
+            priceMinor: v.priceMinor,
+            compareAtMinor: v.compareAtMinor ?? null,
+            isActive: v.isActive ?? true,
+            sortOrder: v.sortOrder ?? index,
           })),
         });
       }

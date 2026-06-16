@@ -80,6 +80,16 @@ function parseProductFormData(formData: FormData) {
     }
   }
 
+  const variantsJson = formData.get("variantsJson");
+  let variants: unknown[] = [];
+  if (typeof variantsJson === "string" && variantsJson.trim()) {
+    try {
+      variants = JSON.parse(variantsJson) as unknown[];
+    } catch {
+      variants = [];
+    }
+  }
+
   const emptyToNull = (value: FormDataEntryValue | null) => {
     const s = String(value ?? "").trim();
     return s === "" ? null : s;
@@ -114,6 +124,7 @@ function parseProductFormData(formData: FormData) {
       lowStockThreshold: formData.get("lowStockThreshold"),
     },
     images,
+    variants,
   };
 }
 

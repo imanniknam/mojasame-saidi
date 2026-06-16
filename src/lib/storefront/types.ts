@@ -4,6 +4,13 @@ export type StoreCategory = {
   descriptionFa: string;
 };
 
+export type StoreVariant = {
+  id: string;
+  nameFa: string;
+  priceMinor: number;
+  compareAtMinor?: number;
+};
+
 export type StoreProduct = {
   id: string;
   slug: string;
@@ -22,4 +29,5 @@ export type StoreProduct = {
   isFeatured?: boolean;
   isBestSeller?: boolean;
   isNew?: boolean;
+  variants: StoreVariant[];
 };

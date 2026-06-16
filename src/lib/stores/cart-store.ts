@@ -10,6 +10,8 @@ export type CartLineId = string;
 export type CartLine = {
   id: CartLineId;
   productId: string;
+  variantId?: string;
+  variantNameFa?: string;
   titleFa: string;
   unitMinor: number;
   quantity: number;

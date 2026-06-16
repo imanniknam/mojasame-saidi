@@ -188,10 +188,11 @@ model Product {
   inventory  Inventory?
   orderItems OrderItem[]
   wishlists  Wishlist[]
-  discounts  Discount[]   @relation("DiscountProducts")
+  discounts  Discount[]      @relation("DiscountProducts")
   cartItems  CartItem[]
   reviews    Review[]
   tags       ProductTag[]
+  variants   ProductVariant[]
 
   @@index([categoryId, isActive])
   @@index([isActive, isFeatured])
@@ -358,8 +359,10 @@ model OrderItem {
   unitPriceMinor Int
   discountMinor  Int     @default(0)
   taxMinor       Int     @default(0)
-  titleFaSnap    String
-  skuSnap        String?
+  titleFaSnap       String
+  skuSnap           String?
+  variantId         String?
+  variantNameFaSnap String?
 
   @@index([orderId])
   @@index([productId])
@@ -442,6 +445,27 @@ model StoreSettings {
   supportEmail   String?
   socialLinks    Json?
   updatedAt      DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Product variants (سایز / رنگ / ...) با قیمت مجزا
+// ---------------------------------------------------------------------------
+
+model ProductVariant {
+  id             String   @id @default(cuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// نام نمایشی سایز/متغیر — مثلاً «کوچک»، «متوسط»، «بزرگ»
+  nameFa         String
+  sku            String?  @unique
+  priceMinor     Int
+  compareAtMinor Int?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([productId, isActive, sortOrder])
 }
 
 // ---------------------------------------------------------------------------
