@@ -120,9 +120,12 @@ model Customer {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  addresses Address[]
-  orders    Order[]
-  wishlists Wishlist[]
+  addresses      Address[]
+  orders         Order[]
+  wishlists      Wishlist[]
+  carts          Cart[]
+  reviews        Review[]
+  discountUsages DiscountUsage[]
 
   @@index([userId])
 }
@@ -186,6 +189,9 @@ model Product {
   orderItems OrderItem[]
   wishlists  Wishlist[]
   discounts  Discount[]   @relation("DiscountProducts")
+  cartItems  CartItem[]
+  reviews    Review[]
+  tags       ProductTag[]
 
   @@index([categoryId, isActive])
   @@index([isActive, isFeatured])
@@ -241,8 +247,9 @@ model Discount {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  categories Category[] @relation("DiscountCategories")
-  products   Product[]  @relation("DiscountProducts")
+  categories Category[]     @relation("DiscountCategories")
+  products   Product[]     @relation("DiscountProducts")
+  usages     DiscountUsage[]
 
   @@index([isActive, startsAt, endsAt])
   @@index([scope])
@@ -324,11 +331,17 @@ model Order {
   /// اسنپ‌شات غیرقابل‌تغییر برای بایگانی قانونی
   shippingSnapshot  Json
   billingSnapshot   Json?
+  /// کد کوپن اعمال‌شده (snapshot)
+  couponCode        String?
+  shippingMethodId  String?
+  shippingMethod    ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  items    OrderItem[]
-  payments Payment[]
+  items         OrderItem[]
+  payments      Payment[]
+  statusHistory OrderStatusHistory[]
+  discountUsage DiscountUsage?
 
   @@index([customerId, createdAt])
   @@index([status, createdAt])
@@ -429,4 +442,180 @@ model StoreSettings {
   supportEmail   String?
   socialLinks    Json?
   updatedAt      DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Cart — سبد خرید پایدار (مهمان + کاربر ثبت‌نام‌شده)
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id                String    @id @default(cuid())
+  customerId        String?
+  customer          Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// شناسه session برای خریدار مهمان
+  sessionId         String?
+  pendingCouponCode String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  items CartItem[]
+
+  @@index([customerId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// روش‌های ارسال
+// ---------------------------------------------------------------------------
+
+model ShippingMethod {
+  id                 String   @id @default(cuid())
+  nameFa             String
+  descriptionFa      String   @default("")
+  priceMinor         Int
+  /// آستانه ارسال رایگان
+  freeThresholdMinor Int?
+  /// مثلاً «۲ تا ۵ روز کاری»
+  estimateFa         String?
+  isActive           Boolean  @default(true)
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([isActive, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// نظرات و امتیازدهی محصول
+// ---------------------------------------------------------------------------
+
+model Review {
+  id         String    @id @default(cuid())
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  /// نام نویسنده برای خریدار مهمان
+  authorFa   String?
+  /// امتیاز ۱ تا ۵
+  rating     Int
+  titleFa    String?
+  bodyFa     String?
+  isApproved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([productId, isApproved])
+  @@index([productId, rating])
+  @@index([customerId])
+}
+
+// ---------------------------------------------------------------------------
+// تگ‌های محصول
+// ---------------------------------------------------------------------------
+
+model Tag {
+  id       String       @id @default(cuid())
+  slug     String       @unique
+  nameFa   String
+  products ProductTag[]
+}
+
+model ProductTag {
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
+  @@index([tagId])
+}
+
+// ---------------------------------------------------------------------------
+// رهگیری استفاده از کد تخفیف (به‌ازای هر سفارش/کاربر)
+// ---------------------------------------------------------------------------
+
+model DiscountUsage {
+  id         String    @id @default(cuid())
+  discountId String
+  discount   Discount  @relation(fields: [discountId], references: [id])
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderId    String    @unique
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  usedAt     DateTime  @default(now())
+
+  @@index([discountId])
+  @@index([discountId, customerId])
+}
+
+// ---------------------------------------------------------------------------
+// خبرنامه
+// ---------------------------------------------------------------------------
+
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  nameFa         String?
+  isActive       Boolean   @default(true)
+  /// منبع ثبت‌نام — homepage | checkout | footer
+  source         String?
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([isActive])
+}
+
+// ---------------------------------------------------------------------------
+// پیام‌های تماس با ما
+// ---------------------------------------------------------------------------
+
+model ContactMessage {
+  id        String    @id @default(cuid())
+  nameFa    String
+  email     String
+  phone     String?
+  subjectFa String?
+  bodyFa    String
+  isRead    Boolean   @default(false)
+  isReplied Boolean   @default(false)
+  repliedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([isRead, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// تاریخچه وضعیت سفارش (audit trail)
+// ---------------------------------------------------------------------------
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  /// یادداشت برای مشتری یا ادمین
+  noteFa    String?
+  /// آیدی ادمین یا «system»
+  createdBy String?
+  createdAt DateTime    @default(now())
+
+  @@index([orderId, createdAt])
 }
