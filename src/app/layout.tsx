@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Vazirmatn } from "next/font/google";
+// فونت‌ها در globals.css با @font-face از public/fonts بارگذاری می‌شوند.
+// next/font/google عمداً استفاده نمی‌شود — بیلد را به شبکه وابسته می‌کرد و در
+// نبود دسترسی، بی‌صدا به Arial تنزل می‌داد.
 import { Providers } from "@/components/providers";
 import { getStoreNavUser } from "@/lib/auth/store-nav-user";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -9,12 +11,6 @@ import {
   getSiteUrl,
 } from "@/lib/seo/metadata";
 import "./globals.css";
-
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic"],
-  variable: "--font-vazirmatn",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -58,7 +54,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#100e0b",
+  themeColor: "#0e0c0a",
   width: "device-width",
   initialScale: 1,
 };
@@ -71,7 +67,19 @@ export default async function RootLayout({
   const initialSessionUser = await getStoreNavUser();
 
   return (
-    <html lang="fa" dir="rtl" className={`${vazirmatn.variable} dark`}>
+    <html lang="fa" dir="rtl" className="dark">
+      <head>
+        {/* زیرمجموعه‌ی عربی وزیرمتن روی همه‌ی صفحات لازم است، پس زودتر گرفته
+            می‌شود تا متن فارسی با فالبک سیستمی پرش نکند. بقیه‌ی فونت‌ها را
+            مرورگر بر اساس unicode-range فقط در صورت نیاز می‌گیرد. */}
+        <link
+          rel="preload"
+          href="/fonts/vazirmatn-arabic-100_900.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <JsonLd data={buildOrganizationJsonLd()} />
         <Providers initialSessionUser={initialSessionUser}>{children}</Providers>

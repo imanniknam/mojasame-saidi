@@ -46,26 +46,50 @@ const config: Config = {
           foreground: "hsl(var(--highlight-foreground))",
         },
       },
+      /**
+       * Near-square scale. Every step is a small multiple of --radius (2px) so
+       * the whole system stays architectural; `rounded-full` is still available
+       * for genuinely circular things (avatars, icon buttons).
+       */
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xl: "calc(var(--radius) + 4px)",
-        "2xl": "calc(var(--radius) + 10px)",
+        sm: "1px",
+        DEFAULT: "var(--radius)",
+        md: "var(--radius)",
+        lg: "calc(var(--radius) * 2)",
+        xl: "calc(var(--radius) * 3)",
+        "2xl": "calc(var(--radius) * 4)",
+        "3xl": "calc(var(--radius) * 6)",
       },
       fontFamily: {
-        sans: ["var(--font-vazirmatn)", "system-ui", "sans-serif"],
-        display: ["var(--font-vazirmatn)", "system-ui", "sans-serif"],
+        sans: ["Vazirmatn", "system-ui", "sans-serif"],
+        display: ["Vazirmatn", "system-ui", "sans-serif"],
+        latin: ["Cormorant Garamond", "Georgia", "serif"],
       },
       fontSize: {
-        display: ["2.25rem", { lineHeight: "2.65rem", letterSpacing: "-0.02em" }],
-        "display-lg": ["2.75rem", { lineHeight: "3.1rem", letterSpacing: "-0.02em" }],
+        display: ["var(--text-display)", { lineHeight: "1.1", letterSpacing: "-0.03em" }],
+        title: ["var(--text-title)", { lineHeight: "1.4", letterSpacing: "-0.03em" }],
+        heading: ["var(--text-heading)", { lineHeight: "1.4", letterSpacing: "-0.015em" }],
+      },
+      maxWidth: {
+        content: "var(--content-max)",
+        prose: "var(--prose-max)",
       },
       spacing: {
         18: "4.5rem",
         22: "5.5rem",
+        "section-y": "var(--section-y)",
+        "section-x": "var(--section-x)",
         /** Bottom inset above mobile tab bar */
         nav: "4.25rem",
+      },
+      transitionTimingFunction: {
+        out: "var(--ease-out)",
+        "in-out": "var(--ease-in-out)",
+      },
+      transitionDuration: {
+        fast: "var(--dur-fast)",
+        base: "var(--dur-base)",
+        slow: "var(--dur-slow)",
       },
       minHeight: {
         touch: "var(--touch-min)",

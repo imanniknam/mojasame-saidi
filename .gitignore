@@ -32,3 +32,10 @@ prisma/migrations/**/migration_lock.toml
 
 # typescript
 # next-env.d.ts is committed for editor/Next types
+.vercel
+
+# پشتیبان دیتابیس — شامل ایمیل مشتری و داده‌ی سفارش است، هرگز کامیت نشود
+/backups
+
+# تنظیمات مخصوص همین دستگاه
+.claude/settings.local.json
