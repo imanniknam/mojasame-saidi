@@ -39,3 +39,6 @@ prisma/migrations/**/migration_lock.toml
 
 # تنظیمات مخصوص همین دستگاه
 .claude/settings.local.json
+
+# کش افزایشی tsc — آرتیفکت بیلد است
+tsconfig.tsbuildinfo
