@@ -35,7 +35,7 @@ const items: Item[] = [
     id: "categories",
     type: "link",
     href: "/categories",
-    label: "دسته‌ها",
+    label: "مجموعه‌ها",
     icon: LayoutGrid,
     match: (p) => p.startsWith("/categories"),
   },
@@ -67,7 +67,10 @@ function CartCountBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   const text = count > 99 ? "۹۹+" : count.toLocaleString("fa-IR");
   return (
-    <span className="absolute -end-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-highlight px-1 text-[10px] font-bold leading-none text-highlight-foreground">
+    <span
+      data-numeric
+      className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground"
+    >
       {text}
     </span>
   );
@@ -78,9 +81,7 @@ export type MobileBottomNavProps = {
   className?: string;
 };
 
-/**
- * نوار پایین موبایل — RTL، safe-area، جستجو مودال، انیمیشن Framer Motion
- */
+/** نوار پایین موبایل — RTL، safe-area، جستجوی مودال */
 export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavProps) {
   const pathname = usePathname();
   const navCtx = useOptionalNavigation();
@@ -89,7 +90,9 @@ export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavPro
     <nav
       aria-label="ناوبری اصلی موبایل"
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 border-t border-highlight/15 bg-background/86 pb-safe shadow-float backdrop-blur-xl md:hidden",
+        // lg و نه md — هدر دسکتاپ از lg شروع می‌شود؛ اگر اینجا md بماند
+        // بین ۷۶۸ تا ۱۰۲۴ پیکسل هیچ ناوبری‌ای روی صفحه نیست.
+        "fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 pb-safe backdrop-blur-xl lg:hidden",
         className,
       )}
     >
@@ -105,24 +108,24 @@ export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavPro
               <span className="relative flex flex-col items-center">
                 <item.icon
                   className={cn(
-                    "size-6 shrink-0 stroke-[1.85] transition-colors",
-                    active ? "text-highlight drop-shadow" : "text-muted-foreground",
+                    "size-[1.35rem] shrink-0 stroke-[1.6] transition-colors duration-fast",
+                    active ? "text-primary" : "text-muted-foreground",
                   )}
                   aria-hidden
                 />
                 {item.id === "cart" ? <CartCountBadge count={cartCount} /> : null}
                 <span
                   className={cn(
-                    "mt-1 h-1 w-6 rounded-full transition-colors",
-                    active ? "bg-highlight/90 shadow-[0_0_16px_hsl(var(--highlight)/0.45)]" : "bg-transparent",
+                    "mt-1.5 h-px w-5 transition-colors duration-fast",
+                    active ? "bg-primary" : "bg-transparent",
                   )}
                   aria-hidden
                 />
               </span>
               <span
                 className={cn(
-                  "max-w-full truncate text-[0.62rem] font-bold leading-tight sm:text-[0.65rem]",
-                  active ? "text-highlight" : "text-muted-foreground",
+                  "max-w-full truncate text-[0.625rem] font-medium leading-tight",
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 {item.label}
@@ -137,8 +140,8 @@ export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavPro
                   type="button"
                   onClick={() => navCtx?.openSearch()}
                   className={cn(
-                    "flex min-h-touch w-full flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1.5 text-center transition-colors",
-                    active ? "bg-highlight/10 text-highlight" : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+                    "flex min-h-touch w-full flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-center transition-colors duration-fast",
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                   aria-current={active ? "page" : undefined}
                   aria-label="جستجو در محصولات"
@@ -154,8 +157,8 @@ export function MobileBottomNav({ cartCount = 0, className }: MobileBottomNavPro
               <Link
                 href={item.href}
                 className={cn(
-                  "flex min-h-touch flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1.5 text-center transition-colors",
-                  active ? "bg-highlight/10 text-highlight" : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+                  "flex min-h-touch flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-center transition-colors duration-fast",
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >
