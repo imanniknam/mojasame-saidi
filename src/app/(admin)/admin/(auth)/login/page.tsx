@@ -10,7 +10,8 @@ export const metadata = buildPageMetadata({
 
 export default function AdminLoginPage() {
   return (
-    <main className="ds-section flex min-h-dvh items-center pb-24">
+    /* admin-scope تا صفحه‌ی ورود همان پالت پنلی را داشته باشد که به آن وارد می‌شود */
+    <main className="admin-scope flex min-h-dvh items-center bg-background px-4 py-16">
       <LoginPanel mode="admin" />
     </main>
   );

@@ -1,5 +1,16 @@
-import { AdminComingSoon } from "@/components/admin/admin-coming-soon";
+import { AdminPageHeader } from "@/components/admin";
+import { AdminCategoryForm } from "@/components/admin/categories/admin-category-form";
 
-export default function AdminCategoryNewPage() {
-  return <AdminComingSoon title="دسته جدید" description="ایجاد دسته‌بندی با اسلاگ یکتا." />;
+export const metadata = { title: "دسته جدید" };
+
+export default function AdminNewCategoryPage() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <AdminPageHeader
+        title="دسته جدید"
+        description="نام دسته را بنویسید؛ اسلاگ خودکار پیشنهاد می‌شود."
+      />
+      <AdminCategoryForm mode="create" />
+    </div>
+  );
 }

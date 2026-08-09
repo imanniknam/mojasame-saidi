@@ -8,4 +8,3 @@ export { AdminDataTable } from "./admin-data-table";
 export { AdminEmptyState } from "./admin-empty-state";
 export { AdminErrorState } from "./admin-error-state";
 export { AdminLoadingState } from "./admin-loading-state";
-export { AdminComingSoon } from "./admin-coming-soon";

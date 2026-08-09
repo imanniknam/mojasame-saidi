@@ -1,5 +1,4 @@
 import type { AdminTableColumn } from "@/lib/admin/types";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export type AdminDataTableProps<T extends { id: string }> = {
@@ -10,6 +9,13 @@ export type AdminDataTableProps<T extends { id: string }> = {
   caption?: string;
 };
 
+/**
+ * جدول داده‌ی پنل.
+ *
+ * دسکتاپ: جدول واقعی با سربرگ چسبان تا هنگام اسکرول ستون‌ها گم نشوند.
+ * موبایل: هر رکورد یک کارت برچسب‌دار می‌شود — جدول افقیِ کشویی روی موبایل
+ * عملاً غیرقابل استفاده است.
+ */
 export function AdminDataTable<T extends { id: string }>({
   columns,
   data,
@@ -19,9 +25,14 @@ export function AdminDataTable<T extends { id: string }>({
 }: AdminDataTableProps<T>) {
   if (data.length === 0) {
     return (
-      <Card elevated className={cn("rounded-2xl p-8 text-center text-sm text-muted-foreground", className)}>
+      <div
+        className={cn(
+          "border border-border bg-card p-10 text-center text-sm text-muted-foreground",
+          className,
+        )}
+      >
         {emptyMessage}
-      </Card>
+      </div>
     );
   }
 
@@ -29,19 +40,19 @@ export function AdminDataTable<T extends { id: string }>({
   const primaryColumn = visibleMobileColumns[0] ?? columns[0];
 
   return (
-    <Card elevated className={cn("overflow-hidden rounded-2xl border-border/60", className)}>
+    <div className={cn("border border-border bg-card", className)}>
       <div className="hidden md:block">
-        <div className="overflow-x-auto">
+        <div className="max-h-[70vh] overflow-auto">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             {caption ? <caption className="sr-only">{caption}</caption> : null}
-            <thead>
-              <tr className="border-b border-border/60 bg-muted/20">
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-card-elevated">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     scope="col"
                     className={cn(
-                      "px-4 py-3 text-start text-xs font-semibold text-muted-foreground",
+                      "border-b border-border px-4 py-2.5 text-start text-[0.6875rem] font-semibold text-muted-foreground",
                       col.className,
                     )}
                   >
@@ -50,11 +61,17 @@ export function AdminDataTable<T extends { id: string }>({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40">
+            <tbody>
               {data.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-muted/15">
+                <tr
+                  key={row.id}
+                  className="border-b border-border/60 transition-colors duration-fast last:border-b-0 hover:bg-accent/40"
+                >
                   {columns.map((col) => (
-                    <td key={col.key} className={cn("px-4 py-3 align-middle", col.className)}>
+                    <td
+                      key={col.key}
+                      className={cn("px-4 py-3 align-middle", col.className)}
+                    >
                       {col.render(row)}
                     </td>
                   ))}
@@ -65,27 +82,29 @@ export function AdminDataTable<T extends { id: string }>({
         </div>
       </div>
 
-      <ul className="divide-y divide-border/50 md:hidden" aria-label={caption}>
+      <ul className="divide-y divide-border md:hidden" aria-label={caption}>
         {data.map((row) => (
-          <li key={row.id} className="flex flex-col gap-3 p-4">
-            <div className="font-semibold text-foreground">{primaryColumn.render(row)}</div>
+          <li key={row.id} className="flex flex-col gap-2.5 p-4">
+            <div className="text-sm font-semibold text-foreground">
+              {primaryColumn.render(row)}
+            </div>
             {columns
               .filter((col) => col.key !== primaryColumn.key)
               .map((col) => (
                 <div
                   key={col.key}
                   className={cn(
-                    "flex items-center justify-between gap-3 text-sm",
+                    "flex items-center justify-between gap-3 text-[0.8125rem]",
                     col.hideOnMobile && "hidden",
                   )}
                 >
-                  <span className="text-muted-foreground">{col.header}</span>
-                  <span className="text-end font-medium text-foreground">{col.render(row)}</span>
+                  <span className="shrink-0 text-muted-foreground">{col.header}</span>
+                  <span className="min-w-0 text-end text-foreground">{col.render(row)}</span>
                 </div>
               ))}
           </li>
         ))}
       </ul>
-    </Card>
+    </div>
   );
 }

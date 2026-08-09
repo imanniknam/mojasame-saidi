@@ -2,7 +2,6 @@
 
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export type AdminErrorStateProps = {
@@ -19,28 +18,30 @@ export function AdminErrorState({
   className,
 }: AdminErrorStateProps) {
   return (
-    <Card
-      elevated
+    <div
+      role="alert"
       className={cn(
-        "flex flex-col items-center justify-center rounded-[1.75rem] border border-destructive/30 bg-destructive/5 px-6 py-12 text-center",
+        "flex flex-col items-center justify-center border border-destructive/40 bg-destructive/5 px-6 py-12 text-center",
         className,
       )}
-      role="alert"
     >
-      <div
-        className="mb-5 flex size-14 items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive"
-        aria-hidden
-      >
-        <AlertTriangle className="size-7" />
-      </div>
-      <h3 className="text-lg font-bold text-foreground">{title}</h3>
-      <p className="mt-2 max-w-md text-sm leading-7 text-muted-foreground">{description}</p>
+      <AlertTriangle className="size-8 stroke-[1.4] text-destructive" aria-hidden />
+      <h3 className="mt-4 text-base font-bold text-foreground">{title}</h3>
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
       {onRetry ? (
-        <Button variant="outline" size="touch" className="mt-6 gap-2" type="button" onClick={onRetry}>
-          <RotateCcw className="size-4" />
+        <Button
+          variant="outline"
+          size="touch"
+          className="mt-6 gap-2 px-6"
+          type="button"
+          onClick={onRetry}
+        >
+          <RotateCcw className="size-4" aria-hidden />
           تلاش مجدد
         </Button>
       ) : null}
-    </Card>
+    </div>
   );
 }

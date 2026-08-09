@@ -1,17 +1,60 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getAdminDashboardStats() {
-  const [products, categories, activeProducts, lowStock, orders, customers] =
-    await Promise.all([
-      prisma.product.count(),
-      prisma.category.count(),
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.inventory.count({ where: { quantityOnHand: { lte: 3 } } }),
-      prisma.order.count(),
-      prisma.customer.count(),
-    ]);
+  const [
+    products,
+    categories,
+    activeProducts,
+    lowStock,
+    orders,
+    customers,
+    openOrders,
+    revenue,
+  ] = await Promise.all([
+    prisma.product.count(),
+    prisma.category.count(),
+    prisma.product.count({ where: { isActive: true } }),
+    prisma.inventory.count({ where: { quantityOnHand: { lte: 3 } } }),
+    prisma.order.count(),
+    prisma.customer.count(),
+    // سفارش‌هایی که منتظر اقدام فروشنده‌اند
+    prisma.order.count({
+      where: { status: { in: ["AWAITING_PAYMENT", "PAID", "PROCESSING"] } },
+    }),
+    // فروش محقق‌شده — فقط سفارش‌های پرداخت‌شده
+    prisma.order.aggregate({
+      _sum: { totalMinor: true },
+      where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } },
+    }),
+  ]);
 
-  return { products, categories, activeProducts, lowStock, orders, customers };
+  return {
+    products,
+    categories,
+    activeProducts,
+    lowStock,
+    orders,
+    customers,
+    openOrders,
+    revenueMinor: revenue._sum.totalMinor ?? 0,
+  };
+}
+
+/** آخرین سفارش‌ها برای داشبورد */
+export async function listRecentOrders(limit = 5) {
+  return prisma.order.findMany({
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      totalMinor: true,
+      createdAt: true,
+      guestNameFa: true,
+      customer: { select: { displayFa: true } },
+    },
+  });
 }
 
 export async function listAdminProducts(limit = 50) {

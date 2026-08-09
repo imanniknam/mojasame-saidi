@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { ZodError } from "zod";
 import { requireActiveAdminSession } from "@/lib/auth/server";
+import { CACHE_TAGS } from "@/lib/storefront/cached";
 import {
   productCreateSchema,
   productUpdateSchema,
@@ -17,9 +18,26 @@ import {
 import type { ProductActionState } from "./types";
 import { initialProductActionState } from "./types";
 
-function revalidateProductPaths(productId?: string) {
+/**
+ * پس از هر تغییر محصول، هم پنل و هم **فروشگاه** باید تازه شوند.
+ *
+ * قبلاً فقط مسیرهای /admin تازه می‌شدند؛ نتیجه این بود که فروشنده محصول را
+ * ذخیره می‌کرد و تا انقضای کش (۶۰ ثانیه) در سایت نمی‌دید. تگ‌ها در
+ * `@/lib/storefront/cached` تعریف شده‌اند و اینجا باطل می‌شوند.
+ */
+function revalidateProductPaths(productId?: string, slug?: string) {
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
+
+  // کش داده‌ی فروشگاه
+  revalidateTag(CACHE_TAGS.products);
+  revalidateTag(CACHE_TAGS.categories); // شمارش محصولات هر دسته عوض می‌شود
+
+  // صفحات رندرشده‌ی فروشگاه
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/categories");
+  if (slug) revalidatePath(`/products/${slug}`);
 }
 
 export async function createProductAction(
@@ -31,7 +49,7 @@ export async function createProductAction(
     const raw = parseProductFormData(formData);
     const input = productCreateSchema.parse(raw);
     const product = await createProductRecord(input);
-    revalidateProductPaths(product.id);
+    revalidateProductPaths(product.id, input.slug);
     redirect(`/admin/products/${product.id}?saved=1`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -49,7 +67,7 @@ export async function updateProductAction(
     const raw = parseProductFormData(formData);
     const input = productUpdateSchema.parse(raw);
     await updateProductRecord(productId, input);
-    revalidateProductPaths(productId);
+    revalidateProductPaths(productId, input.slug);
     return { ok: true, message: "تغییرات ذخیره شد.", productId };
   } catch (error) {
     if (isRedirectError(error)) throw error;

@@ -24,24 +24,23 @@ export function AdminPageHeader({
   return (
     <header
       className={cn(
-        "flex flex-col gap-4 border-b border-border/50 pb-5 sm:flex-row sm:items-end sm:justify-between",
+        "flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
-      <div className="min-w-0 space-y-1">
-        <h1 className="ds-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {title}
-        </h1>
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
         {description ? (
-          <p className="text-sm leading-7 text-muted-foreground">{description}</p>
+          <p className="mt-1 text-[0.8125rem] text-muted-foreground">{description}</p>
         ) : null}
       </div>
+
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {children}
         {actionLabel && actionHref ? (
           <Button variant="luxury" size="touch" className="gap-2" asChild>
             <Link href={actionHref}>
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden />
               {actionLabel}
             </Link>
           </Button>

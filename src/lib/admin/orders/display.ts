@@ -5,7 +5,7 @@ type CustomerSlice = {
   displayFa: string | null;
   firstName: string | null;
   lastName: string | null;
-  user: { email: string; phone: string | null };
+  user: { email: string | null; phone: string | null };
 } | null;
 
 type OrderCustomerFields = {
@@ -17,10 +17,13 @@ type OrderCustomerFields = {
 
 export function getOrderCustomerDisplay(order: OrderCustomerFields) {
   if (order.customer) {
+    // حساب‌های موبایل‌محور ایمیل ندارند، پس شماره جایگزین نمایش نام می‌شود.
     const name =
       order.customer.displayFa ||
       [order.customer.firstName, order.customer.lastName].filter(Boolean).join(" ") ||
-      order.customer.user.email;
+      order.customer.user.email ||
+      order.customer.user.phone ||
+      "مشتری";
     return {
       name,
       email: order.customer.user.email,

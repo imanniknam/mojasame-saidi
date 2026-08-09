@@ -18,7 +18,7 @@ export default async function AdminPanelLayout({
   const displayName = await getAdminDisplayName(user.id);
 
   return (
-    <AdminShell userLabel={displayName ?? "مدیر"} userEmail={user.email}>
+    <AdminShell userLabel={displayName ?? "مدیر"} userEmail={user.email ?? undefined}>
       {children}
     </AdminShell>
   );
