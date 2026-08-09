@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   CheckCircle2,
   CreditCard,
@@ -19,7 +18,6 @@ import { useCartStore } from "@/lib/stores/cart-store";
 import { useCartHydration } from "@/hooks/use-cart-hydration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -138,7 +136,7 @@ function Stepper({ current }: { current: StepId }) {
   const currentIndex = stepIndex(current);
 
   return (
-    <ol className="grid grid-cols-4 gap-1 rounded-2xl border border-border/70 bg-card/80 p-1 shadow-elegant">
+    <ol className="grid grid-cols-4 gap-1 border border-border bg-card p-1">
       {steps.map((step, index) => {
         const active = step.id === current;
         const done = index < currentIndex;
@@ -147,8 +145,8 @@ function Stepper({ current }: { current: StepId }) {
           <li key={step.id}>
             <div
               className={cn(
-                "flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[0.65rem] font-bold transition-colors sm:min-h-16 sm:text-xs",
-                active && "bg-highlight text-highlight-foreground shadow-elegant",
+                "flex min-h-[4.25rem] flex-col items-center justify-center gap-1 px-1 text-center text-[0.65rem] font-bold transition-colors sm:min-h-16 sm:text-xs",
+                active && "bg-primary text-primary-foreground",
                 done && !active && "bg-accent text-accent-foreground",
                 !active && !done && "text-muted-foreground",
               )}
@@ -171,7 +169,6 @@ function ErrorText({ children }: { children?: string }) {
 
 export function CheckoutFlow() {
   const ready = useCartHydration();
-  const reduceMotion = useReducedMotion();
   const lines = useCartStore((s) => s.lines);
   const discount = useCartStore((s) => s.discount);
   const clearCart = useCartStore((s) => s.clear);
@@ -291,14 +288,13 @@ export function CheckoutFlow() {
     }
   }
 
-  const stepMotion = reduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 10 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -8 },
-        transition: { duration: 0.22 },
-      };
+  /*
+    انیمیشن گذارِ مراحل عمداً حذف شده است.
+    با framer-motion 11 روی React 19، `AnimatePresence mode="wait"` منتظر پایان
+    انیمیشن خروج می‌ماند و آن انیمیشن هرگز کامل نمی‌شد — نتیجه این بود که کاربر
+    فرم آدرس را درست پر می‌کرد، اعتبارسنجی قبول می‌کرد، ولی مرحله‌ی بعد هیچ‌وقت
+    نمایش داده نمی‌شد و خرید همان‌جا متوقف می‌ماند.
+  */
 
   if (!ready) {
     return (
@@ -316,8 +312,8 @@ export function CheckoutFlow() {
   if (empty) {
     return (
       <main className="ds-section mx-auto max-w-lg space-y-6 pb-32 text-center">
-        <Card elevated className="space-y-5 p-8">
-          <PackageCheck className="mx-auto size-14 text-muted-foreground" strokeWidth={1.3} />
+        <div className="space-y-5 border border-border bg-card p-8">
+          <PackageCheck className="mx-auto size-9 stroke-[1.2] text-muted-foreground/60" />
           <div className="space-y-2">
             <h1 className="ds-title">سبد خرید خالی است</h1>
             <p className="ds-subtitle">
@@ -327,7 +323,7 @@ export function CheckoutFlow() {
           <Button variant="luxury" size="touch" asChild>
             <Link href="/">بازگشت به فروشگاه</Link>
           </Button>
-        </Card>
+        </div>
       </main>
     );
   }
@@ -351,12 +347,12 @@ export function CheckoutFlow() {
 
       <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
         <section className="lg:col-span-2">
-          <AnimatePresence mode="wait">
+          <>
             {step === "address" ? (
-              <motion.div key="address" {...stepMotion}>
-                <Card elevated className="space-y-5 border-border/70 p-4 sm:p-6">
+              <div key="address">
+                <div className="space-y-5 border border-border bg-card p-4 sm:p-6">
                   <div className="space-y-1 text-start">
-                    <h2 className="ds-title text-xl">آدرس تحویل</h2>
+                    <h2 className="ds-heading">آدرس تحویل</h2>
                     <p className="ds-subtitle">
                       اطلاعات را کوتاه و دقیق وارد کنید تا ارسال سریع‌تر انجام شود.
                     </p>
@@ -461,15 +457,15 @@ export function CheckoutFlow() {
                       </Button>
                     </div>
                   </form>
-                </Card>
-              </motion.div>
+                </div>
+              </div>
             ) : null}
 
             {step === "shipping" ? (
-              <motion.div key="shipping" {...stepMotion}>
-                <Card elevated className="space-y-5 border-border/70 p-4 sm:p-6">
+              <div key="shipping">
+                <div className="space-y-5 border border-border bg-card p-4 sm:p-6">
                   <div className="space-y-1 text-start">
-                    <h2 className="ds-title text-xl">روش ارسال</h2>
+                    <h2 className="ds-heading">روش ارسال</h2>
                     <p className="ds-subtitle">
                       ساده‌ترین گزینه برای شما انتخاب شده؛ در صورت نیاز تغییر دهید.
                     </p>
@@ -499,9 +495,9 @@ export function CheckoutFlow() {
                         >
                           <span
                             className={cn(
-                              "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
+                              "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-none border",
                               active
-                                ? "border-highlight bg-highlight text-highlight-foreground"
+                                ? "border-highlight bg-highlight text-primary-foreground"
                                 : "border-border bg-card",
                             )}
                           >
@@ -528,15 +524,15 @@ export function CheckoutFlow() {
                       ادامه به پرداخت
                     </Button>
                   </div>
-                </Card>
-              </motion.div>
+                </div>
+              </div>
             ) : null}
 
             {step === "payment" ? (
-              <motion.div key="payment" {...stepMotion}>
-                <Card elevated className="space-y-5 border-border/70 p-4 sm:p-6">
+              <div key="payment">
+                <div className="space-y-5 border border-border bg-card p-4 sm:p-6">
                   <div className="space-y-1 text-start">
-                    <h2 className="ds-title text-xl">روش پرداخت</h2>
+                    <h2 className="ds-heading">روش پرداخت</h2>
                     <p className="ds-subtitle">
                       پرداخت امن آنلاین پیشنهاد می‌شود؛ ثبت سفارش در هر دو حالت ساده است.
                     </p>
@@ -571,7 +567,7 @@ export function CheckoutFlow() {
                           )}
                           aria-pressed={active}
                         >
-                          <Icon className="size-6 shrink-0 text-highlight" />
+                          <Icon className="size-6 shrink-0 text-primary" />
                           <span className="min-w-0 flex-1">
                             <span className="block font-bold">{option.title}</span>
                             <span className="mt-1 block text-sm text-muted-foreground">
@@ -595,14 +591,14 @@ export function CheckoutFlow() {
                       {placingOrder ? "در حال ثبت…" : "ثبت سفارش"}
                     </Button>
                   </div>
-                </Card>
-              </motion.div>
+                </div>
+              </div>
             ) : null}
 
             {step === "confirmation" ? (
-              <motion.div key="confirmation" {...stepMotion}>
-                <Card elevated className="space-y-6 border-border/70 p-6 text-center sm:p-8">
-                  <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 shadow-elegant dark:bg-emerald-950 dark:text-emerald-300">
+              <div key="confirmation">
+                <div className="space-y-6 border border-border bg-card p-6 text-center sm:p-8">
+                  <div className="mx-auto flex size-16 items-center justify-center rounded-none bg-emerald-50 text-emerald-700 shadow-elegant dark:bg-emerald-950 dark:text-emerald-300">
                     <CheckCircle2 className="size-9" aria-hidden />
                   </div>
                   <div className="space-y-2">
@@ -619,16 +615,16 @@ export function CheckoutFlow() {
                       <Link href="/orders">پیگیری سفارش</Link>
                     </Button>
                   </div>
-                </Card>
-              </motion.div>
+                </div>
+              </div>
             ) : null}
-          </AnimatePresence>
+          </>
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-24">
-          <Card elevated className="border-border/70 p-4 shadow-elegant sm:p-5">
-            <h2 className="mb-4 text-start text-base font-bold">خلاصه سفارش</h2>
-            <div className="mb-4 space-y-2 rounded-xl bg-muted/35 p-3 text-sm">
+          <div className="border border-border bg-card p-4 sm:p-5">
+            <h2 className="mb-4 text-start text-sm font-bold text-foreground">خلاصه سفارش</h2>
+            <div className="mb-4 space-y-2 border border-border bg-background p-3 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">تعداد کالا</span>
                 <span className="font-bold tabular-nums">
@@ -682,12 +678,12 @@ export function CheckoutFlow() {
               </div>
               <div className="flex justify-between gap-4 border-t border-border/80 pt-3 text-base">
                 <dt className="font-bold">قابل پرداخت</dt>
-                <dd className="font-bold tabular-nums text-highlight">
+                <dd className="font-bold tabular-nums text-primary">
                   {formatPriceFa(displayTotals.totalMinor)}
                 </dd>
               </div>
             </dl>
-          </Card>
+          </div>
         </aside>
       </div>
 
@@ -696,7 +692,7 @@ export function CheckoutFlow() {
           <div className="mx-auto flex max-w-lg items-center gap-3 px-4 pt-3">
             <div className="min-w-0 flex-1 text-start">
               <p className="text-xs text-muted-foreground">قابل پرداخت</p>
-              <p className="truncate text-lg font-bold tabular-nums text-highlight">
+              <p className="truncate text-lg font-bold tabular-nums text-primary">
                 {formatPriceFa(totals.totalMinor)}
               </p>
             </div>

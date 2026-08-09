@@ -15,6 +15,8 @@ type AddToCartButtonProps = {
   priceMinor: number;
   imageUrl: string;
   inStock: boolean;
+  /** لینک صفحه‌ی محصول — در سبد برای بازگشت به محصول لازم است */
+  href?: string;
 };
 
 export function AddToCartButton({
@@ -25,6 +27,7 @@ export function AddToCartButton({
   priceMinor,
   imageUrl,
   inStock,
+  href,
 }: AddToCartButtonProps) {
   useCartHydration();
   const [adding, setAdding] = useState(false);
@@ -48,6 +51,7 @@ export function AddToCartButton({
           unitMinor: priceMinor,
           quantity: 1,
           imageUrl,
+          href,
         });
       }
     } finally {

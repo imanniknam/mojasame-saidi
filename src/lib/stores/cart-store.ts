@@ -16,6 +16,14 @@ export type CartLine = {
   unitMinor: number;
   quantity: number;
   imageUrl?: string;
+  /**
+   * لینک صفحه‌ی محصول.
+   *
+   * پیش‌تر صفحه‌ی سبد از `/products/{productId}` استفاده می‌کرد، ولی مسیر محصول
+   * با اسلاگ کار می‌کند نه با cuid — یعنی هر کلیک روی کالای سبد ۴۰۴ می‌داد.
+   * اختیاری است چون سبدهای ذخیره‌شده‌ی قبلی در localStorage این فیلد را ندارند.
+   */
+  href?: string;
 };
 
 type CartState = {

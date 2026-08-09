@@ -36,6 +36,7 @@ export function FavoritesPageContent() {
       unitMinor: item.priceMinor,
       quantity: 1,
       imageUrl: item.imageUrl,
+      href: item.href,
     });
   }
 

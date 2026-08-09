@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Minus,
   PackageOpen,
@@ -19,7 +18,6 @@ import { formatPriceFa } from "@/lib/format";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { useCartHydration } from "@/hooks/use-cart-hydration";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +25,6 @@ import { cn } from "@/lib/utils";
 
 export function CartPageContent() {
   const ready = useCartHydration();
-  const reduceMotion = useReducedMotion();
   const lines = useCartStore((s) => s.lines);
   const discount = useCartStore((s) => s.discount);
   const removeLine = useCartStore((s) => s.removeLine);
@@ -45,14 +42,14 @@ export function CartPageContent() {
   if (!ready) {
     return (
       <main className="ds-section mx-auto max-w-5xl animate-pulse space-y-6">
-        <div className="h-8 w-40 rounded-lg bg-muted/60" />
+        <div className="h-8 w-40 bg-muted/60" />
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-3 lg:col-span-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-28 rounded-xl bg-muted/50" />
+              <div key={i} className="h-28 bg-muted/50" />
             ))}
           </div>
-          <div className="h-64 rounded-xl bg-muted/50" />
+          <div className="h-64 bg-muted/50" />
         </div>
       </main>
     );
@@ -74,10 +71,11 @@ export function CartPageContent() {
   const empty = lines.length === 0;
 
   return (
-    <main className="ds-section relative mx-auto max-w-5xl pb-32 md:pb-10">
-      <header className="mb-6 flex flex-col gap-1 text-start sm:mb-8">
-        <h1 className="ds-display text-2xl sm:text-3xl">سبد خرید</h1>
-        <p className="ds-subtitle">
+    <main className="ds-container relative pb-32 pt-8 md:pb-16 lg:pt-10">
+      <header className="mb-7">
+        <p className="ds-overline">Cart</p>
+        <h1 className="ds-title mt-2 text-foreground">سبد خرید</h1>
+        <p data-numeric className="mt-2 text-sm text-muted-foreground">
           {empty
             ? "سبد شما خالی است."
             : `${new Intl.NumberFormat("fa-IR").format(lines.reduce((a, l) => a + l.quantity, 0))} کالا در سبد`}
@@ -85,43 +83,42 @@ export function CartPageContent() {
       </header>
 
       {empty ? (
-        <Card elevated className="flex flex-col items-center gap-6 p-8 text-center sm:p-10">
+        <div className="flex flex-col items-center border border-border bg-card px-6 py-16 text-center">
           <PackageOpen
-            className="size-14 text-muted-foreground/80"
-            strokeWidth={1.25}
+            className="size-9 stroke-[1.2] text-muted-foreground/60"
             aria-hidden
           />
-          <div className="space-y-2">
-            <p className="text-lg font-semibold text-foreground">
-              هنوز چیزی انتخاب نکرده‌اید
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              از میان مجسمه‌ها و دکورهای دست‌ساز، محصول مورد علاقه‌تان را به سبد
-              اضافه کنید.
-            </p>
+          <h2 className="ds-heading mt-4 text-foreground">هنوز چیزی انتخاب نکرده‌اید</h2>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+            از میان مجسمه‌ها و دکورهای دست‌ساز، اثر مورد علاقه‌تان را به سبد اضافه کنید.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button variant="luxury" size="touch" className="px-6" asChild>
+              <Link href="/products">مشاهده همه آثار</Link>
+            </Button>
+            <Button variant="outline" size="touch" className="px-6" asChild>
+              <Link href="/categories">مجموعه‌ها</Link>
+            </Button>
           </div>
-          <Button variant="luxury" size="touch" asChild>
-            <Link href="/">مشاهده فروشگاه</Link>
-          </Button>
-        </Card>
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           <div className="space-y-4 lg:col-span-2">
-            <AnimatePresence initial={false} mode="popLayout">
+            {/*
+              بدون AnimatePresence.
+              با framer-motion 11 روی React 19 انیمیشن خروج هرگز کامل نمی‌شد و
+              کارتِ حذف‌شده با opacity ۱ روی صفحه می‌ماند: کالا از سبد می‌رفت و
+              جمع به‌روز می‌شد، ولی کاربر همچنان آن را می‌دید. انیمیشنی که
+              نمی‌شود به آن اعتماد کرد، بدتر از نبودنش است.
+            */}
+            <>
               {lines.map((line) => (
-                <motion.div
-                  key={line.id}
-                  layout={!reduceMotion}
-                  initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduceMotion ? undefined : { opacity: 0, x: -24 }}
-                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                >
-                  <Card className="overflow-hidden border-border/70 p-0 shadow-elegant">
+                <div key={line.id}>
+                  <div className="border border-border bg-card transition-colors duration-base hover:border-primary/30">
                     <div className="flex gap-3 p-3 sm:gap-4 sm:p-4">
                       <Link
-                        href={`/products/${line.productId}`}
-                        className="relative aspect-square w-[5.25rem] shrink-0 overflow-hidden rounded-lg bg-muted/40 sm:w-28"
+                        href={line.href ?? "/products"}
+                        className="relative aspect-square w-[5.25rem] shrink-0 overflow-hidden bg-muted/40 sm:w-28"
                       >
                         <Image
                           src={line.imageUrl ?? "/images/placeholder-product.svg"}
@@ -134,13 +131,13 @@ export function CartPageContent() {
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col gap-2 text-start">
                         <Link
-                          href={`/products/${line.productId}`}
-                          className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors hover:text-highlight sm:text-base"
+                          href={line.href ?? "/products"}
+                          className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors hover:text-primary sm:text-base"
                         >
                           {line.titleFa}
                         </Link>
                         {line.variantNameFa ? (
-                          <p className="text-xs font-medium text-highlight/80">
+                          <p className="text-xs font-medium text-primary/80">
                             سایز: {line.variantNameFa}
                           </p>
                         ) : null}
@@ -148,12 +145,12 @@ export function CartPageContent() {
                           واحد: {formatPriceFa(line.unitMinor)}
                         </p>
                         <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-1 rounded-full border border-border/80 bg-muted/25 p-1">
+                          <div className="flex items-center border border-border bg-background">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="size-10 rounded-full"
+                              className="size-10 rounded-none"
                               aria-label="کم کردن تعداد"
                               onClick={() =>
                                 setQuantity(
@@ -173,7 +170,7 @@ export function CartPageContent() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="size-10 rounded-full"
+                              className="size-10 rounded-none"
                               aria-label="افزودن تعداد"
                               onClick={() =>
                                 setQuantity(line.id, line.quantity + 1)
@@ -205,16 +202,16 @@ export function CartPageContent() {
                         </div>
                       </div>
                     </div>
-                  </Card>
-                </motion.div>
+                  </div>
+                </div>
               ))}
-            </AnimatePresence>
+            </>
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24">
-            <Card elevated className="border-border/70 p-4 shadow-elegant sm:p-5">
-              <h2 className="mb-3 flex items-center gap-2 text-start text-base font-bold text-foreground">
-                <Tag className="size-4 text-highlight" aria-hidden />
+            <div className="border border-border bg-card p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 text-start text-sm font-bold text-foreground">
+                <Tag className="size-4 stroke-[1.6] text-primary" aria-hidden />
                 کد تخفیف
               </h2>
               <form onSubmit={onApplyCode} className="flex flex-col gap-2 sm:flex-row">
@@ -255,10 +252,10 @@ export function CartPageContent() {
                   </Button>
                 </div>
               ) : null}
-            </Card>
+            </div>
 
-            <Card elevated className="border-border/70 p-4 shadow-elegant sm:p-5">
-              <h2 className="mb-4 text-start text-base font-bold">خلاصه سفارش</h2>
+            <div className="border border-border bg-card p-4 sm:p-5">
+              <h2 className="mb-4 text-start text-sm font-bold text-foreground">خلاصه سفارش</h2>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">جمع کالاها</dt>
@@ -291,7 +288,7 @@ export function CartPageContent() {
                   </dd>
                 </div>
                 {!totals.qualifiesFreeShipping && totals.amountToFreeShippingMinor > 0 ? (
-                  <p className="rounded-lg bg-muted/50 p-2 text-xs leading-relaxed text-muted-foreground">
+                  <p className="border border-border bg-background p-2.5 text-xs leading-relaxed text-muted-foreground">
                     با خرید بیشتر از{" "}
                     <span className="font-semibold text-foreground">
                       {formatPriceFa(FREE_SHIPPING_THRESHOLD_MINOR)}
@@ -304,7 +301,7 @@ export function CartPageContent() {
                 ) : null}
                 <div className="flex justify-between gap-4 border-t border-border/80 pt-3 text-base">
                   <dt className="font-bold">مبلغ قابل پرداخت</dt>
-                  <dd className="font-bold tabular-nums text-highlight">
+                  <dd className="font-bold tabular-nums text-primary">
                     {formatPriceFa(totals.totalMinor)}
                   </dd>
                 </div>
@@ -313,7 +310,7 @@ export function CartPageContent() {
               <Button variant="luxury" size="touch" className="mt-5 hidden w-full md:inline-flex" asChild>
                 <Link href="/checkout">ادامه و تسویه حساب</Link>
               </Button>
-            </Card>
+            </div>
           </div>
         </div>
       )}
@@ -321,14 +318,14 @@ export function CartPageContent() {
       {!empty ? (
         <div
           className={cn(
-            "fixed inset-x-0 z-[48] border-t border-border/80 bg-card/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-float backdrop-blur-lg md:hidden",
+            "fixed inset-x-0 z-[48] border-t border-border/80 bg-background/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden",
             "bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))]",
           )}
         >
           <div className="mx-auto flex max-w-lg items-center gap-3 px-4 pt-3">
             <div className="min-w-0 flex-1 text-start">
               <p className="text-xs text-muted-foreground">مبلغ قابل پرداخت</p>
-              <p className="truncate text-lg font-bold tabular-nums text-highlight">
+              <p className="truncate text-lg font-bold tabular-nums text-primary">
                 {formatPriceFa(totals.totalMinor)}
               </p>
             </div>
