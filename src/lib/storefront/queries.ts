@@ -81,6 +81,95 @@ export async function listStoreCategories(): Promise<StoreCategory[]> {
   }));
 }
 
+/** دسته‌ها به‌همراه تعداد محصولات فعال — برای کارت مجموعه در صفحه اصلی */
+export async function listStoreCategoriesWithCounts(): Promise<
+  (StoreCategory & { count: number })[]
+> {
+  const rows = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { nameFa: "asc" }],
+    select: {
+      slug: true,
+      nameFa: true,
+      _count: { select: { products: { where: { isActive: true } } } },
+    },
+  });
+
+  return rows.map((row) => ({
+    slug: row.slug,
+    nameFa: row.nameFa,
+    descriptionFa: `محصولات دسته ${row.nameFa} — فروشگاه مجسمه‌سازی سعیدی`,
+    count: row._count.products,
+  }));
+}
+
+/** بخش‌های فعال صفحه اصلی، به ترتیب — کنترل‌شده از پنل ادمین */
+export async function listEnabledHomepageSections() {
+  return prisma.homepageSection.findMany({
+    where: { isEnabled: true },
+    orderBy: { sortOrder: "asc" },
+    select: { key: true, titleFa: true, subtitleFa: true, config: true },
+  });
+}
+
+/** تنظیمات فروشگاه — زیرمجموعه‌ی امن برای نمایش در فروشگاه */
+export async function getStorefrontSettings() {
+  return prisma.storeSettings.findUnique({
+    where: { id: 1 },
+    select: {
+      brandNameFa: true,
+      taglineFa: true,
+      trustBadges: true,
+      supportPhone: true,
+      supportEmail: true,
+      socialLinks: true,
+    },
+  });
+}
+
+/**
+ * محصولات لازم برای ترکیب صفحه‌ی اصلی — در یک کوئری.
+ *
+ * قبلاً برای «منتخب»، «پرفروش»، «تازه‌ها» و «تخفیف‌ها» چهار کوئری جدا زده می‌شد.
+ * روی Prisma Postgres با سقف اتصال پایین، هم‌زمانیِ آن کوئری‌ها باعث P2024
+ * (پر شدن connection pool) و بعد P1001 می‌شد. کاتالوگ کوچک است، پس یک‌بار
+ * می‌خوانیم و بخش‌ها را در حافظه می‌سازیم.
+ *
+ * اگر روزی کاتالوگ از این سقف بگذرد، باید به کوئری‌های اختصاصی با ایندکس برگردیم.
+ */
+const HOMEPAGE_PRODUCT_POOL = 100;
+
+export async function listHomepageProducts(): Promise<StoreProduct[]> {
+  const rows = await prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+    take: HOMEPAGE_PRODUCT_POOL,
+    select: productSelect,
+  });
+  return rows.map(mapProduct);
+}
+
+export function selectFeatured(products: StoreProduct[], limit = 8): StoreProduct[] {
+  return products
+    .filter((p) => p.isFeatured || p.isNew || p.isBestSeller)
+    .slice(0, limit);
+}
+
+export function selectBestSellers(products: StoreProduct[], limit = 8): StoreProduct[] {
+  return products.filter((p) => p.isBestSeller).slice(0, limit);
+}
+
+export function selectNewArrivals(products: StoreProduct[], limit = 8): StoreProduct[] {
+  return products.filter((p) => p.isNew).slice(0, limit);
+}
+
+/** فقط محصولاتی که قیمت خط‌خورده‌شان واقعاً از قیمت فعلی بیشتر است */
+export function selectDiscounted(products: StoreProduct[], limit = 8): StoreProduct[] {
+  return products
+    .filter((p) => p.compareAtMinor != null && p.compareAtMinor > p.priceMinor)
+    .slice(0, limit);
+}
+
 export async function listStoreProducts(): Promise<StoreProduct[]> {
   const rows = await prisma.product.findMany({
     where: { isActive: true },
@@ -141,57 +230,12 @@ export async function listProductsByCategorySlug(slug: string): Promise<StorePro
   return rows.map(mapProduct);
 }
 
-const MIN_SEARCH_LENGTH = 2;
-const MAX_SEARCH_RESULTS = 48;
-
-export function normalizeSearchQuery(raw: string | undefined | null): string {
-  return (raw ?? "").trim().replace(/\s+/g, " ");
-}
-
-export function isSearchQueryValid(query: string): boolean {
-  return query.length >= MIN_SEARCH_LENGTH;
-}
-
-function buildProductSearchWhere(query: string): Prisma.ProductWhereInput {
-  return {
-    isActive: true,
-    OR: [
-      { titleFa: { contains: query, mode: "insensitive" } },
-      { descriptionFa: { contains: query, mode: "insensitive" } },
-      { slug: { contains: query, mode: "insensitive" } },
-      { sku: { contains: query, mode: "insensitive" } },
-      { metaTitleFa: { contains: query, mode: "insensitive" } },
-      { metaDescFa: { contains: query, mode: "insensitive" } },
-      { category: { isActive: true, nameFa: { contains: query, mode: "insensitive" } } },
-    ],
-  };
-}
-
-export async function searchStoreProducts(rawQuery: string) {
-  const query = normalizeSearchQuery(rawQuery);
-
-  if (!isSearchQueryValid(query)) {
-    return { query, products: [] as StoreProduct[], total: 0 };
-  }
-
-  const where = buildProductSearchWhere(query);
-
-  const [rows, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: [{ isFeatured: "desc" }, { isBestSeller: "desc" }, { titleFa: "asc" }],
-      take: MAX_SEARCH_RESULTS,
-      select: productSelect,
-    }),
-    prisma.product.count({ where }),
-  ]);
-
-  return {
-    query,
-    products: rows.map(mapProduct),
-    total,
-  };
-}
+/**
+ * جستجو عمداً اینجا نیست.
+ * منطق آن در `@/lib/storefront/search` است، چون به نرمال‌سازی فارسی نیاز دارد
+ * که با `contains` پستگرس روی متن خام قابل انجام نبود («كتاب» عربی هرگز
+ * «کتاب» فارسی را پیدا نمی‌کرد).
+ */
 
 export async function getRelatedStoreProducts(
   product: StoreProduct,
