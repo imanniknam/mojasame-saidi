@@ -1,45 +1,61 @@
 import type { Metadata } from "next";
-import { ProductCard } from "@/components/store/product-card";
-import { formatPriceFa } from "@/lib/format";
+import { Breadcrumbs } from "@/components/store/breadcrumbs";
+import { EmptyState } from "@/components/store/empty-state";
+import { ListingToolbar } from "@/components/store/listing-toolbar";
+import { ProductGrid } from "@/components/store/product-grid";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { listStoreProducts } from "@/lib/storefront/queries";
+import { getCachedAllProducts } from "@/lib/storefront/cached";
+import { parseSort, sortProducts } from "@/lib/storefront/sort";
+import { safeQuery } from "@/lib/storefront/safe";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "همه محصولات",
+  title: "همه آثار",
   description:
-    "خرید محصولات دست‌ساز و دکوراتیو فروشگاه مجسمه‌سازی سعیدی؛ مجسمه، گلدان، تندیس و جاشمعی.",
+    "خرید محصولات دست‌ساز و دکوراتیو مجسمه سعیدی؛ مجسمه، تندیس، گلدان، جاشمعی و دکور هنری.",
   path: "/products",
 });
 
-export default async function ProductsPage() {
-  const storeProducts = await listStoreProducts();
+type ProductsPageProps = {
+  searchParams: Promise<{ sort?: string }>;
+};
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const { sort: rawSort } = await searchParams;
+  const sort = parseSort(rawSort);
+
+  const products = await safeQuery("allProducts", getCachedAllProducts, []);
+  const sorted = sortProducts(products, sort);
 
   return (
-    <main className="ds-section mx-auto max-w-6xl space-y-6 pb-28">
-      <header className="space-y-2 text-start">
-        <p className="ds-overline">فروشگاه</p>
-        <h1 className="ds-display text-3xl">همه محصولات</h1>
-        <p className="ds-subtitle max-w-2xl">
-          انتخابی از دکورهای دست‌ساز، هنری و گرم برای خانه و محل کار.
+    <main className="mb-nav">
+      <div className="ds-container pt-6">
+        <Breadcrumbs items={[{ label: "خانه", href: "/" }, { label: "همه آثار" }]} />
+      </div>
+
+      <div className="ds-container py-8 lg:py-10">
+        <p className="ds-overline">Shop</p>
+        <h1 className="ds-title mt-2 text-foreground">همه آثار</h1>
+        <p className="ds-prose mt-3">
+          انتخابی از مجسمه‌ها و دکورهای دست‌ساز برای خانه و فضای کاری.
         </p>
-      </header>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {storeProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            href={`/products/${product.slug}`}
-            productId={product.id}
-            titleFa={product.titleFa}
-            imageUrl={product.imageUrl}
-            priceMinor={product.priceMinor}
-            compareAtMinor={product.compareAtMinor}
-            priceLabel={formatPriceFa(product.priceMinor)}
-            compareAtLabel={
-              product.compareAtMinor ? formatPriceFa(product.compareAtMinor) : null
-            }
-            badge={product.isNew ? "جدید" : product.isBestSeller ? "پرفروش" : null}
-          />
-        ))}
+
+        <div className="mt-8">
+          {sorted.length > 0 ? (
+            <>
+              <ListingToolbar total={sorted.length} sort={sort} />
+              <div className="mt-6">
+                <ProductGrid products={sorted} prioritizeFirst />
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              titleFa="فعلاً اثری برای نمایش نیست"
+              descriptionFa="به‌زودی آثار تازه اضافه می‌شوند. می‌توانید مجموعه‌ها را ببینید."
+              ctaHref="/categories"
+              ctaLabel="مشاهده مجموعه‌ها"
+            />
+          )}
+        </div>
       </div>
     </main>
   );

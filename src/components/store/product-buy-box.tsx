@@ -16,6 +16,8 @@ type ProductBuyBoxProps = {
   imageUrl: string;
   inStock: boolean;
   variants: StoreVariant[];
+  /** اسلاگ محصول — برای ساخت لینک بازگشت از سبد */
+  slug?: string;
 };
 
 export function ProductBuyBox({
@@ -26,6 +28,7 @@ export function ProductBuyBox({
   imageUrl,
   inStock,
   variants,
+  slug,
 }: ProductBuyBoxProps) {
   const hasVariants = variants.length > 0;
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -86,6 +89,7 @@ export function ProductBuyBox({
           titleFa={titleFa}
           priceMinor={activePrice}
           imageUrl={imageUrl}
+          href={slug ? `/products/${slug}` : undefined}
           inStock={canAdd}
         />
       ) : (

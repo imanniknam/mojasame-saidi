@@ -1,58 +1,70 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+import { ProductMedia } from "@/components/store/product-media";
 
 export type CategoryCardProps = {
   href: string;
   nameFa: string;
   subtitleFa?: string | null;
-  /** تصویر اختیاری دسته */
-  imageUrl?: string | null;
+  imageUrl?: string;
+  /** تعداد محصولات دسته — اگر داده باشد نمایش داده می‌شود */
+  count?: number | null;
   className?: string;
+  priority?: boolean;
 };
 
-/** کارت دسته — مینیمال، تایپوگرافی فارسی */
+/**
+ * کارت مجموعه — تصویر تمام‌قاب با نوار عنوان روی پایه‌ی تیره.
+ * عنوان همیشه خوانا می‌ماند چون روی گرادیان محافظ می‌نشیند، نه مستقیم روی عکس.
+ */
 export function CategoryCard({
   href,
   nameFa,
   subtitleFa,
-  imageUrl,
+  imageUrl = "",
+  count,
   className,
+  priority = false,
 }: CategoryCardProps) {
   return (
     <Link
       href={href}
-      className={cn("group block touch-manipulation outline-none", className)}
+      className={cn(
+        "group relative block aspect-[4/3] overflow-hidden border border-border bg-card",
+        "transition-colors duration-base ease-out hover:border-primary/35",
+        className,
+      )}
     >
-      <Card className="relative overflow-hidden rounded-[1.25rem] border-highlight/10 bg-card/80 p-0 transition-[transform,border-color,box-shadow] duration-300 hover:border-highlight/30 hover:shadow-card active:scale-[0.99]">
-        <div
-          className={cn(
-            "flex min-h-[5.5rem] flex-col justify-end gap-0.5 bg-gradient-to-br from-card-elevated via-card to-background p-4 sm:min-h-[6.25rem] sm:p-5",
-            imageUrl && "min-h-[7.5rem] sm:min-h-[8.5rem]",
-          )}
-        >
-          {imageUrl ? (
-            <div
-              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.18] grayscale transition duration-500 group-hover:scale-105 group-hover:opacity-30"
-              style={{ backgroundImage: `url(${imageUrl})` }}
-              aria-hidden
-            />
-          ) : null}
-          <div className="relative">
-            <span className="ds-overline mb-1 block text-[0.65rem] text-highlight opacity-90">
-              دسته
-            </span>
-            <h3 className="text-start text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl">
-              {nameFa}
-            </h3>
-            {subtitleFa ? (
-              <p className="mt-1 line-clamp-2 text-start text-xs text-muted-foreground sm:text-sm">
-                {subtitleFa}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </Card>
+      <ProductMedia
+        src={imageUrl}
+        alt={nameFa}
+        titleFa={nameFa}
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
+        priority={priority}
+        imageClassName="ds-media-zoom"
+      />
+
+      {/* گرادیان محافظ — خوانایی عنوان روی هر عکسی */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/75 to-transparent"
+        aria-hidden
+      />
+
+      <div className="absolute inset-x-0 bottom-0 p-3 text-center sm:p-4">
+        <h3 className="text-sm font-bold text-foreground transition-colors duration-fast group-hover:text-primary sm:text-[0.9375rem]">
+          {nameFa}
+        </h3>
+        {/* «۰ اثر» اطلاعاتی به کاربر نمی‌دهد و فروشگاه را خالی‌تر نشان می‌دهد */}
+        {count != null && count > 0 ? (
+          <p data-numeric className="mt-0.5 text-[0.6875rem] text-muted-foreground">
+            {new Intl.NumberFormat("fa-IR").format(count)} اثر
+          </p>
+        ) : subtitleFa ? (
+          <p className="mt-0.5 line-clamp-1 text-[0.6875rem] text-muted-foreground">
+            {subtitleFa}
+          </p>
+        ) : null}
+      </div>
     </Link>
   );
 }

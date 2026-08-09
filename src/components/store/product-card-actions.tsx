@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
-import { Heart, Loader2, Plus } from "lucide-react";
+import { Check, Heart, Loader2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { useFavoritesStore } from "@/lib/stores/favorites-store";
@@ -9,38 +9,33 @@ import { cn } from "@/lib/utils";
 
 let cartRehydrateStarted = false;
 
-export type ProductCardActionsProps = {
+/**
+ * کنش‌های کارت محصول به دو قطعه‌ی مستقل شکسته شده‌اند تا کارت بتواند
+ * قلب را روی تصویر و دکمه‌ی سبد را در نوار اطلاعات بنشاند (مطابق طرح).
+ */
+
+export type FavoriteToggleProps = {
   productId: string;
   titleFa: string;
   imageUrl: string;
   priceMinor?: number;
   href?: string;
   defaultFavorite?: boolean;
-  showFavorite?: boolean;
-  showQuickAdd?: boolean;
+  className?: string;
 };
 
-export function ProductCardActions({
+export function FavoriteToggle({
   productId,
   titleFa,
   imageUrl,
   priceMinor,
   href = "#",
   defaultFavorite = false,
-  showFavorite = true,
-  showQuickAdd = true,
-}: ProductCardActionsProps) {
+  className,
+}: FavoriteToggleProps) {
   const [favorite, setFavorite] = useState(defaultFavorite);
-  const [adding, setAdding] = useState(false);
   const storedFavorite = useFavoritesStore((state) => state.has(productId));
   const toggleStoredFavorite = useFavoritesStore((state) => state.toggle);
-
-  useEffect(() => {
-    if (!cartRehydrateStarted) {
-      cartRehydrateStarted = true;
-      void useCartStore.persist.rehydrate();
-    }
-  }, []);
 
   useEffect(() => {
     setFavorite(defaultFavorite || storedFavorite);
@@ -62,92 +57,117 @@ export function ProductCardActions({
     [href, imageUrl, priceMinor, productId, titleFa, toggleStoredFavorite],
   );
 
+  return (
+    <button
+      type="button"
+      onClick={toggleFavorite}
+      aria-pressed={favorite}
+      aria-label={favorite ? `حذف ${titleFa} از علاقه‌مندی‌ها` : `افزودن ${titleFa} به علاقه‌مندی‌ها`}
+      className={cn(
+        "ds-touch-target inline-flex items-center justify-center rounded-sm border border-border/70 bg-background/70 text-muted-foreground backdrop-blur-sm",
+        "transition-colors duration-fast ease-out hover:border-primary/50 hover:text-primary",
+        favorite && "border-primary/50 text-primary",
+        className,
+      )}
+    >
+      <Heart
+        className={cn("size-[1.15rem]", favorite ? "fill-current stroke-[2]" : "stroke-[1.6]")}
+        aria-hidden
+      />
+    </button>
+  );
+}
+
+export type QuickAddButtonProps = {
+  productId: string;
+  titleFa: string;
+  imageUrl: string;
+  priceMinor?: number;
+  /** لینک صفحه‌ی محصول — در سبد ذخیره می‌شود */
+  href?: string;
+  className?: string;
+  /** حالت آیکونی برای نوار اطلاعات کارت */
+  compact?: boolean;
+};
+
+export function QuickAddButton({
+  productId,
+  titleFa,
+  imageUrl,
+  priceMinor,
+  href,
+  className,
+  compact = false,
+}: QuickAddButtonProps) {
+  const [state, setState] = useState<"idle" | "adding" | "added">("idle");
+
+  useEffect(() => {
+    if (!cartRehydrateStarted) {
+      cartRehydrateStarted = true;
+      void useCartStore.persist.rehydrate();
+    }
+  }, []);
+
   const handleQuickAdd = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (priceMinor == null) {
-        return;
-      }
+      if (priceMinor == null) return;
 
-      setAdding(true);
-      try {
-        const { lines, addLine, setQuantity } = useCartStore.getState();
-        const existing = lines.find((line) => line.productId === productId);
-        if (existing) {
-          setQuantity(existing.id, existing.quantity + 1);
-        } else {
-          addLine({
-            productId,
-            titleFa,
-            unitMinor: priceMinor,
-            quantity: 1,
-            imageUrl,
-          });
-        }
-      } finally {
-        window.setTimeout(() => setAdding(false), 450);
+      setState("adding");
+      const { lines, addLine, setQuantity } = useCartStore.getState();
+      const existing = lines.find((line) => line.productId === productId);
+      if (existing) {
+        setQuantity(existing.id, existing.quantity + 1);
+      } else {
+        addLine({ productId, titleFa, unitMinor: priceMinor, quantity: 1, imageUrl, href });
       }
+      window.setTimeout(() => setState("added"), 250);
+      window.setTimeout(() => setState("idle"), 1600);
     },
-    [productId, titleFa, priceMinor, imageUrl],
+    [productId, titleFa, priceMinor, imageUrl, href],
   );
 
-  if (!showFavorite && (!showQuickAdd || priceMinor == null)) {
-    return null;
+  if (priceMinor == null) return null;
+
+  const Icon = state === "adding" ? Loader2 : state === "added" ? Check : ShoppingBag;
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={handleQuickAdd}
+        disabled={state === "adding"}
+        aria-label={`افزودن ${titleFa} به سبد خرید`}
+        className={cn(
+          "ds-touch-target inline-flex items-center justify-center rounded-sm border border-border/70 text-muted-foreground",
+          "transition-colors duration-fast ease-out hover:border-primary/50 hover:text-primary",
+          state === "added" && "border-primary/50 text-primary",
+          className,
+        )}
+      >
+        <Icon
+          className={cn("size-[1.05rem] stroke-[1.6]", state === "adding" && "animate-spin")}
+          aria-hidden
+        />
+      </button>
+    );
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-[4] flex flex-col justify-between p-2 sm:p-2.5">
-      <div className="flex justify-end">
-        {showFavorite ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            onClick={toggleFavorite}
-            aria-pressed={favorite}
-            aria-label={
-              favorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"
-            }
-            className={cn(
-              "pointer-events-auto ds-touch-target size-11 shrink-0 rounded-full border border-highlight/15 bg-background/75 shadow-elegant backdrop-blur-md transition-colors hover:border-highlight/35 hover:text-highlight md:size-10",
-              favorite && "border-highlight/40 bg-highlight/15 text-highlight",
-            )}
-          >
-            <span className="transition-transform duration-200 active:scale-90">
-              <Heart
-                className={cn(
-                  "size-[1.25rem]",
-                  favorite ? "fill-current stroke-[2]" : "stroke-[1.85]",
-                )}
-              />
-            </span>
-          </Button>
-        ) : null}
-      </div>
-
-      {showQuickAdd && priceMinor != null ? (
-        <div className="pointer-events-auto mt-auto flex justify-end">
-          <div className="w-full max-md:translate-y-0 max-md:opacity-100 md:translate-y-1 md:opacity-0 md:transition-all md:duration-300 md:group-hover/card:translate-y-0 md:group-hover/card:opacity-100">
-            <Button
-              type="button"
-              variant="luxury"
-              size="touch"
-              disabled={adding}
-              onClick={handleQuickAdd}
-              className="h-11 w-full gap-2 rounded-xl text-sm font-bold shadow-card sm:h-12 md:h-11"
-              aria-label={`افزودن سریع ${titleFa} به سبد خرید`}
-            >
-              {adding ? (
-                <Loader2 className="size-5 animate-spin" aria-hidden />
-              ) : (
-                <Plus className="size-5" aria-hidden />
-              )}
-              <span>افزودن به سبد</span>
-            </Button>
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <Button
+      type="button"
+      variant="luxury"
+      size="touch"
+      disabled={state === "adding"}
+      onClick={handleQuickAdd}
+      className={cn("w-full gap-2 text-sm font-bold", className)}
+    >
+      <Icon
+        className={cn("size-[1.15rem]", state === "adding" && "animate-spin")}
+        aria-hidden
+      />
+      <span>{state === "added" ? "به سبد اضافه شد" : "افزودن به سبد"}</span>
+    </Button>
   );
 }
