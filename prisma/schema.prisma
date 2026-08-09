@@ -72,8 +72,11 @@ enum AddressLabel {
 /// حساب ورود (ایمیل/رمز یا OAuth در آینده)
 model User {
   id           String   @id @default(cuid())
-  email        String   @unique
+  /// اختیاری — ثبت‌نام و ورود با شماره موبایل انجام می‌شود.
+  /// در Postgres ایندکس یکتا چند NULL را می‌پذیرد، پس یکتایی ایمیل‌های واقعی حفظ می‌شود.
+  email        String?  @unique
   passwordHash String
+  /// شناسه‌ی اصلی ورود
   phone        String?  @unique
   role         UserRole @default(CUSTOMER)
   isActive     Boolean  @default(true)

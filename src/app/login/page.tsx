@@ -13,7 +13,7 @@ export const metadata = buildPageMetadata({
 export default function LoginPage() {
   return (
     <StoreShell>
-      <main className="ds-section flex min-h-[70dvh] items-center pb-24">
+      <main className="mb-nav flex min-h-[70dvh] items-center px-4 py-14">
         <Suspense
           fallback={
             <p className="mx-auto text-sm text-muted-foreground">در حال بارگذاری...</p>

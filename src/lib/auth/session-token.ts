@@ -2,7 +2,8 @@ export type SessionRole = "CUSTOMER" | "ADMIN";
 
 export type SessionUser = {
   id: string;
-  email: string;
+  /** اختیاری — حساب‌هایی که فقط با موبایل ثبت‌نام کرده‌اند ایمیل ندارند */
+  email: string | null;
   role: SessionRole;
 };
 
@@ -79,7 +80,8 @@ function safeParsePayload(payload: string): SessionPayload | null {
     const parsed = JSON.parse(payload) as Partial<SessionPayload>;
     if (
       typeof parsed.id !== "string" ||
-      typeof parsed.email !== "string" ||
+      // ایمیل می‌تواند null باشد، ولی اگر بود باید رشته باشد
+      (parsed.email !== null && typeof parsed.email !== "string") ||
       (parsed.role !== "CUSTOMER" && parsed.role !== "ADMIN") ||
       typeof parsed.iat !== "number" ||
       typeof parsed.exp !== "number"

@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail, normalizeDigits } from "@/lib/validations/auth";
 
+/**
+ * ورود فروشگاه فقط با شماره موبایل انجام می‌شود، ولی این تابع عمداً ایمیل را هم
+ * می‌پذیرد: مسیرهای دیگر (بازیابی رمز) هنوز با ایمیل کار می‌کنند.
+ */
 export function normalizeIdentifier(identifier: string) {
   const trimmed = identifier.trim();
   if (trimmed.includes("@")) {

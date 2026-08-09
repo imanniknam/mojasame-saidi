@@ -3,23 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
-import {
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Mail,
-  Phone,
-  UserRound,
-  UserPlus,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Eye, EyeOff, Loader2, Mail, Smartphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { readAuthResponse } from "@/lib/auth/client";
 import { useSession, notifySessionChanged } from "@/hooks/use-session";
+import { normalizeDigits } from "@/lib/validations/auth";
 import { cn } from "@/lib/utils";
 
 type SignupPanelProps = {
@@ -30,16 +21,20 @@ type SignupSuccessPayload = {
   redirectTo?: string;
   user?: {
     displayName: string;
-    email: string;
+    email: string | null;
     role: "CUSTOMER";
   };
 };
 
+const STRENGTH_LABELS = ["خیلی ضعیف", "ضعیف", "متوسط", "خوب", "قوی"] as const;
+
 export function SignupPanel({ className }: SignupPanelProps) {
   const router = useRouter();
   const { setUser, refresh } = useSession();
-  const [showPassword, setShowPassword] = useState(false);
+
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,24 +42,28 @@ export function SignupPanel({ className }: SignupPanelProps) {
   const passwordScore = useMemo(() => {
     let score = 0;
     if (password.length >= 8) score += 1;
-    if (/[A-Za-z]/.test(password)) score += 1;
-    if (/\d/.test(password)) score += 1;
+    if (password.length >= 12) score += 1;
+    if (/[A-Za-z]/.test(password) && /\d/.test(password)) score += 1;
     if (/[^A-Za-z0-9]/.test(password)) score += 1;
     return score;
   }, [password]);
+
+  function onPhoneChange(raw: string) {
+    setPhone(normalizeDigits(raw).replace(/[^\d]/g, "").slice(0, 11));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setMessage(null);
-    setSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
-    if (formData.get("terms") !== "on") {
-      setError("برای ساخت حساب، پذیرش قوانین خرید و حریم خصوصی لازم است.");
-      setSubmitting(false);
+    if (!/^09\d{9}$/.test(phone)) {
+      setError("شماره موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.");
       return;
     }
+
+    setSubmitting(true);
+    const formData = new FormData(event.currentTarget);
 
     try {
       const response = await fetch("/api/auth/signup", {
@@ -72,9 +71,9 @@ export function SignupPanel({ className }: SignupPanelProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: String(formData.get("name") ?? ""),
-          phone: String(formData.get("phone") ?? ""),
-          email: String(formData.get("email") ?? ""),
-          password: String(formData.get("password") ?? ""),
+          phone,
+          email: String(formData.get("email") ?? "").trim(),
+          password,
         }),
       });
 
@@ -84,7 +83,7 @@ export function SignupPanel({ className }: SignupPanelProps) {
         setError(
           !result.ok && result.error?.message
             ? result.error.message
-            : "ثبت‌نام با خطا روبه‌رو شد.",
+            : "ساخت حساب با خطا روبه‌رو شد.",
         );
         return;
       }
@@ -92,15 +91,17 @@ export function SignupPanel({ className }: SignupPanelProps) {
       if ("user" in result && result.user) {
         setUser({
           name: result.user.displayName,
-          email: result.user.email,
+          email: result.user.email ?? undefined,
           role: result.user.role,
         });
       }
 
-      setMessage("حساب شما ساخته شد. در حال انتقال...");
+      setMessage("حساب شما ساخته شد. در حال انتقال…");
       notifySessionChanged();
       await refresh();
-      router.replace(result.redirectTo ?? "/");
+      router.replace(
+        "redirectTo" in result && result.redirectTo ? result.redirectTo : "/",
+      );
       router.refresh();
     } catch {
       setError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
@@ -110,220 +111,194 @@ export function SignupPanel({ className }: SignupPanelProps) {
   }
 
   return (
-    <section
-      className={cn(
-        "relative mx-auto grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-highlight/15 bg-card/70 shadow-float backdrop-blur-xl lg:grid-cols-[1.05fr_0.95fr]",
-        className,
-      )}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,hsl(var(--highlight)/0.18),transparent_18rem)]"
-        aria-hidden
-      />
+    <section className={cn("mx-auto w-full max-w-sm", className)}>
+      <div className="flex flex-col items-center text-center">
+        <Link href="/" aria-label="صفحه اصلی">
+          <BrandMark orientation="vertical" />
+        </Link>
 
-      <Card className="relative border-0 bg-transparent p-5 shadow-none sm:p-8 lg:p-10">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="rounded-xl text-sm font-semibold text-muted-foreground transition-colors hover:text-highlight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            بازگشت به فروشگاه
-          </Link>
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-highlight/20 bg-highlight/10 text-highlight shadow-elegant">
-            <UserPlus className="size-6" aria-hidden />
+        <p className="ds-overline mt-8">Register</p>
+        <h1 className="ds-title mt-2 text-foreground">ساخت حساب</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          با شماره موبایل ثبت‌نام کنید. ایمیل اختیاری است.
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="mt-8 flex flex-col gap-4 border border-border bg-card p-5 sm:p-6"
+      >
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="signup-name">نام و نام خانوادگی</Label>
+          <div className="relative">
+            <UserRound
+              className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.6] text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="signup-name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="مثلاً سارا احمدی"
+              className="h-12 border-border bg-background pe-10"
+              required
+            />
           </div>
         </div>
 
-        <div className="mb-8 space-y-3 text-start">
-          <div className="flex items-center gap-2">
-            <span className="h-px w-9 bg-highlight/70" />
-            <p className="ds-overline text-highlight">ثبت‌نام مشتری</p>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="signup-phone">شماره موبایل</Label>
+          <div className="relative">
+            <Smartphone
+              className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.6] text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="signup-phone"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              dir="ltr"
+              placeholder="09123456789"
+              value={phone}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="h-12 border-border bg-background pe-10 text-start font-mono tracking-wide"
+              required
+            />
           </div>
-          <h1 className="ds-display text-3xl text-foreground sm:text-4xl">
-            ساخت حساب کاربری
-          </h1>
-          <p className="ds-body max-w-xl text-muted-foreground">
-            برای پیگیری سفارش‌ها، ذخیره علاقه‌مندی‌ها و خرید سریع‌تر حساب خود را بسازید.
+          <p className="text-[0.6875rem] text-muted-foreground">
+            برای ورود به حساب از همین شماره استفاده می‌کنید.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div className="space-y-2 text-start">
-            <Label htmlFor="signup-name">نام و نام خانوادگی</Label>
-            <div className="relative">
-              <UserRound
-                className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id="signup-name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                placeholder="مثلاً سارا احمدی"
-                className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12"
-                required
-              />
-            </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="signup-email">ایمیل</Label>
+            <span className="text-[0.6875rem] text-muted-foreground">اختیاری</span>
+          </div>
+          <div className="relative">
+            <Mail
+              className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.6] text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="signup-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              dir="ltr"
+              placeholder="sara@example.com"
+              className="h-12 border-border bg-background pe-10 text-start"
+              aria-describedby="email-hint"
+            />
+          </div>
+          <p id="email-hint" className="text-[0.6875rem] text-muted-foreground">
+            اگر ایمیل ندهید، در صورت فراموشی رمز باید با پشتیبانی تماس بگیرید.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="signup-password">رمز عبور</Label>
+          <div className="relative">
+            <Input
+              id="signup-password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              dir="ltr"
+              placeholder="حداقل ۸ کاراکتر"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 border-border bg-background ps-11 text-start"
+              required
+              minLength={8}
+              aria-describedby="password-strength"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute start-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+              aria-label={showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? (
+                <EyeOff className="size-[1.15rem] stroke-[1.6]" aria-hidden />
+              ) : (
+                <Eye className="size-[1.15rem] stroke-[1.6]" aria-hidden />
+              )}
+            </button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 text-start">
-              <Label htmlFor="signup-phone">شماره موبایل</Label>
-              <div className="relative">
-                <Phone
-                  className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  id="signup-phone"
-                  name="phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="09123456789"
-                  dir="ltr"
-                  className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12 text-left"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 text-start">
-              <Label htmlFor="signup-email">ایمیل</Label>
-              <div className="relative">
-                <Mail
-                  className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  id="signup-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="sara@example.com"
-                  dir="ltr"
-                  className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12 text-left"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-start">
-            <Label htmlFor="signup-password">رمز عبور</Label>
-            <div className="relative">
-              <LockKeyhole
-                className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id="signup-password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                placeholder="حداقل ۸ کاراکتر"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                dir="ltr"
-                className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12 ps-12 text-left"
-                required
-                minLength={8}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((current) => !current)}
-                className="absolute start-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-highlight"
-                aria-label={showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-5" aria-hidden />
-                ) : (
-                  <Eye className="size-5" aria-hidden />
-                )}
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-1" aria-hidden>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 gap-1" aria-hidden>
               {Array.from({ length: 4 }).map((_, index) => (
                 <span
                   key={index}
                   className={cn(
-                    "h-1.5 rounded-full bg-muted",
-                    index < passwordScore && "bg-highlight shadow-[0_0_12px_hsl(var(--highlight)/0.35)]",
+                    "h-1 flex-1 transition-colors duration-fast",
+                    index < passwordScore ? "bg-primary" : "bg-muted",
                   )}
                 />
               ))}
             </div>
-          </div>
-
-          <label className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/35 p-3 text-sm leading-7 text-muted-foreground">
-            <input
-              type="checkbox"
-              name="terms"
-              className="mt-1 size-4 rounded border-border bg-background accent-[hsl(var(--highlight))]"
-              required
-            />
-            <span>
-              قوانین خرید، حریم خصوصی و ارسال امن آثار هنری را می‌پذیرم.
+            {/* متن هم می‌آید، چون نوار رنگی به‌تنهایی برای کاربر کم‌بینا پیام ندارد */}
+            <span
+              id="password-strength"
+              aria-live="polite"
+              className="w-16 text-[0.6875rem] text-muted-foreground"
+            >
+              {password ? STRENGTH_LABELS[passwordScore] : ""}
             </span>
-          </label>
+          </div>
+        </div>
 
-          {message ? (
-            <div
-              className="rounded-2xl border border-highlight/20 bg-highlight/10 p-3 text-sm leading-7 text-highlight"
-              role="status"
-            >
-              {message}
-            </div>
-          ) : null}
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm leading-relaxed text-muted-foreground">
+          <input
+            type="checkbox"
+            name="terms"
+            className="mt-1 size-4 shrink-0 accent-[hsl(var(--primary))]"
+            required
+          />
+          <span>قوانین خرید و حریم خصوصی را می‌پذیرم.</span>
+        </label>
 
-          {error ? (
-            <div
-              className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-sm leading-7 text-red-200"
-              role="alert"
-            >
-              {error}
-            </div>
-          ) : null}
+        {message ? (
+          <p role="status" aria-live="polite" className="text-sm text-primary">
+            {message}
+          </p>
+        ) : null}
 
-          <Button
-            type="submit"
-            variant="luxury"
-            size="touch"
-            className="w-full"
-            disabled={submitting}
-            aria-busy={submitting}
+        {error ? (
+          <p
+            role="alert"
+            className="border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
           >
-            {submitting ? "در حال ساخت حساب..." : "ایجاد حساب کاربری"}
-          </Button>
-        </form>
+            {error}
+          </p>
+        ) : null}
 
-        <div className="mt-7 flex flex-col gap-3 text-center text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>قبلاً حساب ساخته‌اید؟</span>
-          <Link href="/login" className="font-semibold text-highlight hover:underline">
-            ورود به حساب
-          </Link>
-        </div>
-      </Card>
+        <Button
+          type="submit"
+          variant="luxury"
+          size="touch"
+          className="mt-1 w-full gap-2"
+          disabled={submitting}
+          aria-busy={submitting}
+        >
+          {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {submitting ? "در حال ساخت حساب…" : "ایجاد حساب"}
+        </Button>
+      </form>
 
-      <div className="relative hidden min-h-[38rem] overflow-hidden border-s border-border/60 bg-background/70 lg:block">
-        <div className="absolute inset-8 rounded-[1.5rem] border border-highlight/15 bg-[url('/images/placeholder-product.svg')] bg-cover bg-center opacity-90 shadow-card" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-        <div className="absolute bottom-8 right-8 left-8 rounded-3xl border border-highlight/20 bg-background/75 p-5 shadow-elegant backdrop-blur-md">
-          <Badge variant="highlight" className="mb-4 border border-highlight/30">
-            حساب امن
-          </Badge>
-          <h2 className="text-2xl font-bold text-foreground">عضویت در گالری سعیدی</h2>
-          <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
-            {["پیگیری سفارش‌ها", "ذخیره علاقه‌مندی‌ها", "خرید سریع‌تر"].map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-highlight" aria-hidden />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        قبلاً حساب ساخته‌اید؟{" "}
+        <Link href="/login" className="font-semibold text-primary hover:underline">
+          ورود
+        </Link>
+      </p>
     </section>
   );
 }

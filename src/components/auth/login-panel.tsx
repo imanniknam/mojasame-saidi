@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Eye, EyeOff, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { readAuthResponse } from "@/lib/auth/client";
 import { useSession, notifySessionChanged } from "@/hooks/use-session";
+import { normalizeDigits } from "@/lib/validations/auth";
 import { cn } from "@/lib/utils";
 
 type LoginMode = "customer" | "admin";
@@ -22,28 +22,16 @@ type LoginPanelProps = {
 
 const contentByMode = {
   customer: {
-    eyebrow: "ورود مشتری",
-    title: "ورود به حساب کاربری",
-    description:
-      "برای مشاهده سفارش‌ها، علاقه‌مندی‌ها و ادامه خرید وارد حساب خود شوید.",
-    emailLabel: "ایمیل یا شماره موبایل",
-    emailPlaceholder: "مثلاً sara@example.com",
-    submitLabel: "ورود به فروشگاه",
-    badge: "حساب امن",
-    switchHref: "/signup",
-    switchLabel: "ایجاد حساب جدید",
+    eyebrow: "Account",
+    title: "ورود به حساب",
+    description: "برای مشاهده سفارش‌ها، علاقه‌مندی‌ها و ادامه خرید وارد شوید.",
+    submitLabel: "ورود",
   },
   admin: {
-    eyebrow: "پنل مدیریت",
-    title: "ورود امن مدیر",
-    description:
-      "دسترسی مدیریت فقط برای ادمین‌های تاییدشده فروشگاه مجسمه‌سازی سعیدی فعال می‌شود.",
-    emailLabel: "ایمیل مدیر",
-    emailPlaceholder: "admin@mojasamesaidi.ir",
+    eyebrow: "Admin",
+    title: "ورود مدیر",
+    description: "دسترسی فقط برای مدیران تأییدشده فعال است.",
     submitLabel: "ورود به پنل مدیریت",
-    badge: "Admin Only",
-    switchHref: "/login",
-    switchLabel: "ورود مشتری",
   },
 } satisfies Record<LoginMode, Record<string, string>>;
 
@@ -60,6 +48,8 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
   const router = useRouter();
   const { setUser, refresh } = useSession();
   const copy = contentByMode[mode];
+
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,12 +61,22 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
     }
   }, []);
 
+  /** ارقام فارسی/عربی همان‌جا به لاتین تبدیل می‌شوند تا کاربر ببیند چه ثبت شده */
+  function onPhoneChange(raw: string) {
+    setPhone(normalizeDigits(raw).replace(/[^\d]/g, "").slice(0, 11));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setMessage(null);
-    setSubmitting(true);
 
+    if (!/^09\d{9}$/.test(phone)) {
+      setError("شماره موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.");
+      return;
+    }
+
+    setSubmitting(true);
     const formData = new FormData(event.currentTarget);
     const next =
       typeof window === "undefined"
@@ -88,7 +88,7 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identifier: String(formData.get("identifier") ?? ""),
+          phone,
           password: String(formData.get("password") ?? ""),
           mode,
           remember: formData.get("remember") === "on",
@@ -122,7 +122,7 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
         });
       }
 
-      setMessage("ورود موفق بود. در حال انتقال...");
+      setMessage("ورود موفق بود. در حال انتقال…");
       notifySessionChanged();
       await refresh();
       router.replace(redirectTo);
@@ -135,203 +135,148 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
   }
 
   return (
-    <section
-      className={cn(
-        "relative mx-auto grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-highlight/15 bg-card/70 shadow-float backdrop-blur-xl lg:grid-cols-[0.9fr_1.1fr]",
-        className,
-      )}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,hsl(var(--highlight)/0.18),transparent_18rem)]"
-        aria-hidden
-      />
+    <section className={cn("mx-auto w-full max-w-sm", className)}>
+      <div className="flex flex-col items-center text-center">
+        <Link href="/" aria-label="صفحه اصلی">
+          <BrandMark orientation="vertical" />
+        </Link>
 
-      <div className="relative hidden min-h-[36rem] overflow-hidden border-e border-border/60 bg-background/70 lg:block">
-        <div className="absolute inset-8 rounded-[1.5rem] border border-highlight/15 bg-[url('/images/placeholder-product.svg')] bg-cover bg-center opacity-90 shadow-card" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
-        <div className="absolute bottom-8 right-8 left-8 rounded-3xl border border-highlight/20 bg-background/75 p-5 shadow-elegant backdrop-blur-md">
-          <Badge variant="highlight" className="mb-4 border border-highlight/30">
-            {copy.badge}
-          </Badge>
-          <h2 className="text-2xl font-bold text-foreground">گالری خصوصی سعیدی</h2>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">
-            تجربه‌ای مینیمال، امن و لوکس برای مدیریت خریدها و آثار هنری فروشگاه.
-          </p>
-        </div>
+        <p className="ds-overline mt-8">{copy.eyebrow}</p>
+        <h1 className="ds-title mt-2 text-foreground">{copy.title}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {copy.description}
+        </p>
       </div>
 
-      <Card className="relative border-0 bg-transparent p-5 shadow-none sm:p-8 lg:p-10">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="rounded-xl text-sm font-semibold text-muted-foreground transition-colors hover:text-highlight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="mt-8 flex flex-col gap-4 border border-border bg-card p-5 sm:p-6"
+      >
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`${mode}-login-phone`}>شماره موبایل</Label>
+          <div className="relative">
+            <Smartphone
+              className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.6] text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id={`${mode}-login-phone`}
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              dir="ltr"
+              placeholder="09123456789"
+              value={phone}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              aria-invalid={error != null || undefined}
+              className="h-12 border-border bg-background pe-10 text-start font-mono tracking-wide"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor={`${mode}-login-password`}>رمز عبور</Label>
+            <Link
+              href="/login?forgot=1"
+              className="text-xs text-muted-foreground transition-colors hover:text-primary"
+            >
+              فراموشی رمز؟
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id={`${mode}-login-password`}
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              dir="ltr"
+              placeholder="••••••••"
+              className="h-12 border-border bg-background ps-11 text-start"
+              required
+              minLength={8}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute start-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+              aria-label={showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? (
+                <EyeOff className="size-[1.15rem] stroke-[1.6]" aria-hidden />
+              ) : (
+                <Eye className="size-[1.15rem] stroke-[1.6]" aria-hidden />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {mode === "customer" ? (
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              name="remember"
+              className="size-4 shrink-0 accent-[hsl(var(--primary))]"
+            />
+            مرا در این دستگاه به خاطر بسپار
+          </label>
+        ) : null}
+
+        {message ? (
+          <p role="status" aria-live="polite" className="text-sm text-primary">
+            {message}
+          </p>
+        ) : null}
+
+        {error ? (
+          <p
+            role="alert"
+            className="border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
           >
+            {error}
+          </p>
+        ) : null}
+
+        <Button
+          type="submit"
+          variant="luxury"
+          size="touch"
+          className="mt-1 w-full gap-2"
+          disabled={submitting}
+          aria-busy={submitting}
+        >
+          {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {submitting ? "در حال بررسی…" : copy.submitLabel}
+        </Button>
+      </form>
+
+      <div className="mt-6 text-center text-sm">
+        {mode === "customer" ? (
+          <p className="text-muted-foreground">
+            حساب ندارید؟{" "}
+            <Link href="/signup" className="font-semibold text-primary hover:underline">
+              ثبت‌نام
+            </Link>
+          </p>
+        ) : (
+          <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="size-3.5 stroke-[1.6]" aria-hidden />
+            ورود مدیران ثبت و پایش می‌شود
+          </p>
+        )}
+      </div>
+
+      {mode === "customer" ? (
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          <Link href="/" className="transition-colors hover:text-primary">
             بازگشت به فروشگاه
           </Link>
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-highlight/20 bg-highlight/10 text-highlight shadow-elegant">
-            {mode === "admin" ? (
-              <ShieldCheck className="size-6" aria-hidden />
-            ) : (
-              <LockKeyhole className="size-6" aria-hidden />
-            )}
-          </div>
-        </div>
-
-        <div className="mb-8 space-y-3 text-start">
-          <div className="flex items-center gap-2">
-            <span className="h-px w-9 bg-highlight/70" />
-            <p className="ds-overline text-highlight">{copy.eyebrow}</p>
-          </div>
-          <h1 className="ds-display text-3xl text-foreground sm:text-4xl">
-            {copy.title}
-          </h1>
-          <p className="ds-body max-w-xl text-muted-foreground">{copy.description}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div className="space-y-2 text-start">
-            <Label htmlFor={`${mode}-login-email`}>{copy.emailLabel}</Label>
-            <div className="relative">
-              <Mail
-                className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id={`${mode}-login-email`}
-                name="identifier"
-                type={mode === "admin" ? "email" : "text"}
-                autoComplete={mode === "admin" ? "username" : "email"}
-                placeholder={copy.emailPlaceholder}
-                dir="ltr"
-                className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12 text-left"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2 text-start">
-            <div className="flex items-center justify-between gap-3">
-              <Label htmlFor={`${mode}-login-password`}>رمز عبور</Label>
-              {mode === "customer" ? (
-                <Link
-                  href="/login?forgot=1"
-                  className="text-xs font-semibold text-highlight hover:underline"
-                >
-                  فراموشی رمز؟
-                </Link>
-              ) : (
-                <Link
-                  href="/login?forgot=1"
-                  className="text-xs font-semibold text-highlight hover:underline"
-                >
-                  بازیابی رمز مدیر
-                </Link>
-              )}
-            </div>
-            <div className="relative">
-              <LockKeyhole
-                className="pointer-events-none absolute end-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id={`${mode}-login-password`}
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="رمز عبور"
-                dir="ltr"
-                className="h-[3.25rem] rounded-2xl border-highlight/15 bg-background/55 pe-12 ps-12 text-left"
-                required
-                minLength={8}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((current) => !current)}
-                className="absolute start-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-highlight"
-                aria-label={showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-5" aria-hidden />
-                ) : (
-                  <Eye className="size-5" aria-hidden />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {mode === "customer" ? (
-            <label className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/35 p-3 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                name="remember"
-                className="size-4 rounded border-border bg-background accent-[hsl(var(--highlight))]"
-              />
-              مرا در این دستگاه به خاطر بسپار
-            </label>
-          ) : null}
-
-          {message ? (
-            <div
-              className="rounded-2xl border border-highlight/20 bg-highlight/10 p-3 text-sm leading-7 text-highlight"
-              role="status"
-            >
-              {message}
-            </div>
-          ) : null}
-
-          {error ? (
-            <div
-              className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-sm leading-7 text-red-200"
-              role="alert"
-            >
-              {error}
-            </div>
-          ) : null}
-
-          <Button
-            type="submit"
-            variant="luxury"
-            size="touch"
-            className="w-full"
-            disabled={submitting}
-            aria-busy={submitting}
-          >
-            {submitting ? "در حال بررسی..." : copy.submitLabel}
-          </Button>
-        </form>
-
-        <div className="mt-7 space-y-4">
-          {mode === "customer" ? (
-            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-start">
-              <p className="text-sm font-semibold text-foreground">ورود مدیر فروشگاه</p>
-              <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                برای مدیریت محصولات، سفارش‌ها و تنظیمات از پنل ادمین وارد شوید.
-              </p>
-              <Button variant="outline" size="sm" className="mt-3 w-full rounded-xl" asChild>
-                <Link href="/admin/login">ورود به پنل مدیریت</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-start">
-              <p className="text-sm text-muted-foreground">
-                حساب تست مدیر:{" "}
-                <span className="font-mono text-foreground" dir="ltr">
-                  admin@mojasamesaidi.ir
-                </span>
-              </p>
-            </div>
-          )}
-
-        <div className="flex flex-col gap-3 text-center text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            {mode === "customer" ? "حساب ندارید؟" : "ورود مدیران ثبت و مانیتور می‌شود."}
-          </span>
-          <Link href={copy.switchHref} className="font-semibold text-highlight hover:underline">
-            {copy.switchLabel}
-          </Link>
-        </div>
-        </div>
-      </Card>
+        </p>
+      ) : null}
     </section>
   );
 }

@@ -49,13 +49,13 @@ async function handleLogin(request: Request) {
 
   try {
     const body = loginSchema.parse(await request.json());
-    const user = await findUserByIdentifier(body.identifier);
+    const user = await findUserByIdentifier(body.phone);
 
     if (!user?.isActive) {
       return jsonNoStore(
         {
           ok: false,
-          error: { code: "INVALID_CREDENTIALS", message: "ایمیل/موبایل یا رمز عبور اشتباه است." },
+          error: { code: "INVALID_CREDENTIALS", message: "شماره موبایل یا رمز عبور اشتباه است." },
         },
         { status: 401 },
       );
@@ -66,7 +66,7 @@ async function handleLogin(request: Request) {
       return jsonNoStore(
         {
           ok: false,
-          error: { code: "INVALID_CREDENTIALS", message: "ایمیل/موبایل یا رمز عبور اشتباه است." },
+          error: { code: "INVALID_CREDENTIALS", message: "شماره موبایل یا رمز عبور اشتباه است." },
         },
         { status: 401 },
       );
@@ -109,6 +109,7 @@ async function handleLogin(request: Request) {
 
     const displayName = formatUserDisplayName({
       email: user.email,
+      phone: user.phone,
       customer: user.customer,
       admin: user.admin,
     });

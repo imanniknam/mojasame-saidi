@@ -37,14 +37,14 @@ async function handleSignup(request: Request) {
 
   try {
     const body = signupSchema.parse(await request.json());
-    const email = normalizeEmail(body.email);
     const phone = normalizePhone(body.phone);
     const { firstName, lastName, displayFa } = splitDisplayName(body.name);
     const passwordHash = await hashPassword(body.password);
 
     const user = await prisma.user.create({
       data: {
-        email,
+        // شناسه‌ی حساب شماره موبایل است؛ ایمیل اگر داده شده باشد فقط برای بازیابی رمز.
+        email: body.email ? normalizeEmail(body.email) : null,
         phone,
         passwordHash,
         role: "CUSTOMER",
@@ -62,6 +62,7 @@ async function handleSignup(request: Request) {
 
     const displayName = formatUserDisplayName({
       email: user.email,
+      phone: user.phone,
       customer: user.customer,
     });
 

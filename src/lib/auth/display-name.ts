@@ -9,7 +9,9 @@ type AdminName = {
 } | null;
 
 export function formatUserDisplayName(input: {
-  email: string;
+  /** حساب‌های موبایل‌محور ایمیل ندارند */
+  email?: string | null;
+  phone?: string | null;
   customer?: CustomerName;
   admin?: AdminName;
 }) {
@@ -23,6 +25,10 @@ export function formatUserDisplayName(input: {
 
   if (input.admin?.displayName?.trim()) return input.admin.displayName.trim();
 
-  const local = input.email.split("@")[0]?.trim();
-  return local || input.email;
+  // ترتیب جایگزین‌ها: بخش محلی ایمیل، بعد شماره موبایل، بعد یک برچسب عمومی.
+  const local = input.email?.split("@")[0]?.trim();
+  if (local) return local;
+  if (input.email?.trim()) return input.email.trim();
+  if (input.phone?.trim()) return input.phone.trim();
+  return "کاربر";
 }

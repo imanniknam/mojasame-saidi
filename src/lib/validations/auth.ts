@@ -13,24 +13,52 @@ export function normalizeDigits(value: string) {
 }
 
 const phoneSchema = z
-  .string()
+  .string({
+    // بدون این، نبودِ فیلد پیام انگلیسیِ پیش‌فرض Zod را برمی‌گرداند
+    required_error: "شماره موبایل را وارد کنید.",
+    invalid_type_error: "شماره موبایل را وارد کنید.",
+  })
   .trim()
   .transform((value) => normalizeDigits(value).replace(/[^\d]/g, ""))
   .pipe(z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست."));
 
+/**
+ * ورود با شماره موبایل.
+ *
+ * ایمیل حذف شد چون در ایران موبایل شناسه‌ی طبیعی خرید است و کاربر آن را به‌خاطر
+ * دارد. `phoneSchema` ارقام فارسی و عربی را هم می‌پذیرد و نرمال می‌کند، پس
+ * «۰۹۱۲۱۲۳۴۵۶۷» و «09121234567» هر دو کار می‌کنند.
+ */
 export const loginSchema = z.object({
-  identifier: z.string().trim().min(3, "ایمیل یا شماره موبایل را وارد کنید."),
-  password: z.string().min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد."),
+  phone: phoneSchema,
+  password: z
+    .string({ required_error: "رمز عبور را وارد کنید." })
+    .min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد."),
   mode: z.enum(["customer", "admin"]).default("customer"),
   remember: z.boolean().default(false),
   next: z.string().optional(),
 });
 
+/**
+ * ثبت‌نام با شماره موبایل. ایمیل اختیاری است و فقط برای بازیابی رمز به کار می‌آید.
+ *
+ * فیلد خالی به `undefined` تبدیل می‌شود، نه رشته‌ی تهی — وگرنه چند حساب با
+ * ایمیلِ "" ساخته می‌شد و ایندکس یکتای ایمیل روی دومی می‌شکست.
+ */
 export const signupSchema = z.object({
-  name: z.string().trim().min(2, "نام و نام خانوادگی را وارد کنید.").max(80),
-  email: z.string().trim().email("ایمیل معتبر نیست.").max(160),
+  name: z
+    .string({ required_error: "نام و نام خانوادگی را وارد کنید." })
+    .trim()
+    .min(2, "نام و نام خانوادگی را وارد کنید.")
+    .max(80),
   phone: phoneSchema,
-  password: z.string().min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد.").max(128),
+  email: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().email("ایمیل معتبر نیست.").max(160).optional(),
+  ),
+  password: z
+    .string({ required_error: "رمز عبور را وارد کنید." })
+    .min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد.").max(128),
 });
 
 export function normalizeEmail(email: string) {
@@ -64,7 +92,9 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     token: z.string().trim().min(20, "لینک بازیابی نامعتبر است."),
-    password: z.string().min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد.").max(128),
+    password: z
+    .string({ required_error: "رمز عبور را وارد کنید." })
+    .min(8, "رمز عبور باید حداقل ۸ کاراکتر باشد.").max(128),
     confirmPassword: z.string().min(8, "تکرار رمز عبور را وارد کنید.").max(128),
   })
   .refine((data) => data.password === data.confirmPassword, {

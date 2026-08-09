@@ -79,7 +79,8 @@ export async function POST(request: Request) {
           orderNumber: order.orderNumber,
           amountMinor: order.totalMinor,
           mobile: body.address.phone,
-          email: sessionUser?.email,
+          // حساب‌های موبایل‌محور ایمیل ندارند؛ زرین‌پال ایمیل را اختیاری می‌گیرد.
+          email: sessionUser?.email ?? undefined,
         });
 
         return jsonNoStore({

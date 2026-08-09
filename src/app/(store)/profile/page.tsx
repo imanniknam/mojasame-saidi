@@ -80,8 +80,9 @@ export default async function ProfilePage() {
         <InfoRow
           icon={<Mail className="size-5" aria-hidden />}
           label="ایمیل"
-          value={user.email}
-          dir="ltr"
+          value={user.email ?? "ثبت نشده"}
+          dir={user.email ? "ltr" : undefined}
+          muted={!user.email}
         />
         <InfoRow
           icon={<Phone className="size-5" aria-hidden />}

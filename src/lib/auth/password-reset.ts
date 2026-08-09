@@ -30,9 +30,13 @@ export async function requestPasswordReset(emailInput: string) {
     select: { id: true, email: true, isActive: true },
   });
 
-  if (!user?.isActive) {
+  // بازیابی رمز از راه ایمیل انجام می‌شود؛ حساب‌های موبایل‌محور ایمیل ندارند و
+  // نمی‌شود برایشان لینک فرستاد. پاسخ عمداً همان پاسخ عمومی است تا نشود از این
+  // مسیر فهمید کدام ایمیل در سیستم ثبت شده است.
+  if (!user?.isActive || !user.email) {
     return { sent: false as const, reason: "generic" as const };
   }
+  const userEmail = user.email;
 
   const recent = await prisma.passwordResetToken.findFirst({
     where: {
@@ -65,7 +69,7 @@ export async function requestPasswordReset(emailInput: string) {
 
   return {
     sent: true as const,
-    email: user.email,
+    email: userEmail,
     token,
     expiresAt,
   };
