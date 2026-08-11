@@ -10,6 +10,9 @@ export type HeroProps = {
   subtitleFa: string;
   ctaHref: string;
   ctaLabel: string;
+  /** تصویر تحریریه‌ی ثابت برای هویت بصری Hero */
+  backgroundImageUrl?: string;
+  backgroundImageAlt?: string;
   secondaryHref?: string;
   secondaryLabel?: string;
   /** اثر شاخص — تصویر پس‌زمینه‌ی قهرمان */
@@ -33,11 +36,15 @@ export function Hero({
   subtitleFa,
   ctaHref,
   ctaLabel,
+  backgroundImageUrl,
+  backgroundImageAlt,
   secondaryHref,
   secondaryLabel,
   feature,
 }: HeroProps) {
-  const hasPhoto = feature != null && !isPendingImage(feature.imageUrl);
+  const heroImageUrl = backgroundImageUrl ?? feature?.imageUrl ?? "";
+  const heroImageAlt = backgroundImageAlt ?? feature?.titleFa ?? titleFa;
+  const hasPhoto = !isPendingImage(heroImageUrl);
 
   return (
     <section
@@ -47,44 +54,48 @@ export function Hero({
       )}
       aria-labelledby="hero-title"
     >
-      {hasPhoto && feature ? (
+      {hasPhoto ? (
         <>
           <div className="absolute inset-0 -z-10">
             <ProductMedia
-              src={feature.imageUrl}
-              alt={feature.titleFa}
-              titleFa={feature.titleFa}
+              src={heroImageUrl}
+              alt={heroImageAlt}
+              titleFa={titleFa}
               sizes="100vw"
               priority
-              imageClassName="object-cover"
+              imageClassName="object-cover object-[68%_center] sm:object-[64%_center]"
             />
           </div>
-          {/* لایه‌ی محافظ — از راست (ابتدای متن) تیره‌تر تا متن همیشه خوانا بماند */}
+          {/* فضای خالیِ سمت چپ تصویر محل متن است؛ این لایه کنتراست را ثابت نگه می‌دارد. */}
           <div
-            className="absolute inset-0 -z-10 bg-gradient-to-l from-background via-background/85 to-background/35"
+            className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/80 to-background/5"
             aria-hidden
           />
           <div
-            className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-transparent to-background/60"
+            className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-transparent to-background/45"
             aria-hidden
           />
         </>
       ) : null}
 
-      <div className="ds-container flex min-h-[clamp(26rem,62vh,38rem)] flex-col justify-center py-16 sm:py-20">
-        <div className="max-w-xl">
+      <div className="ds-container flex min-h-[clamp(31rem,68vh,45rem)] flex-col justify-center py-16 sm:py-20">
+        <div className="max-w-xl lg:ms-auto lg:w-[44%]">
           {!hasPhoto ? (
             <BrandGlyph className="mb-6 size-14 text-primary/70" />
           ) : null}
 
+          {hasPhoto ? <p className="ds-overline mb-4">Saeidi Sculpture</p> : null}
+
           <h1
             id="hero-title"
-            className="ds-display text-primary"
+            className="ds-display max-w-[11ch] text-foreground drop-shadow-[0_2px_20px_rgba(0,0,0,0.75)]"
           >
             {titleFa}
           </h1>
 
-          <p className="ds-body mt-5 max-w-md text-muted-foreground">{subtitleFa}</p>
+          <p className="ds-body mt-5 max-w-md text-foreground/80 drop-shadow-[0_1px_10px_rgba(0,0,0,0.9)]">
+            {subtitleFa}
+          </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button variant="luxury" size="touch" className="group gap-2 px-6" asChild>

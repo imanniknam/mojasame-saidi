@@ -135,6 +135,8 @@ export default async function RootPage() {
               subtitleFa={HERO_COPY.subtitleFa}
               ctaHref="/products"
               ctaLabel={HERO_COPY.ctaLabel}
+              backgroundImageUrl="/images/brand/home-hero.webp"
+              backgroundImageAlt="نیم‌تنه کلاسیک در گالری مجسمه سعیدی"
               secondaryHref="/categories"
               secondaryLabel="مجموعه‌ها"
               feature={
@@ -227,6 +229,8 @@ export default async function RootPage() {
           bodyFa={STORY_COPY.bodyFa}
           ctaHref="/about"
           ctaLabel={STORY_COPY.ctaLabel}
+          imageUrl="/images/brand/atelier-story.webp"
+          imageAlt="هنرمند در حال پرداخت جزئیات یک مجسمه کلاسیک"
         />
       </main>
     </StoreShell>
