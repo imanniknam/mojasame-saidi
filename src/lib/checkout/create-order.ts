@@ -30,9 +30,12 @@ export type CreateOrderInput = {
   sessionUser: AuthenticatedUser | null;
 };
 
+// هزینه‌ی ارسال فعلاً حذف شده (تصمیم موقت) — همراه با src/lib/cart/totals.ts
+// و checkout-flow.tsx هم‌زمان به‌روزرسانی می‌شود. این فایل مرجع نهاییِ مبلغی
+// است که واقعاً از مشتری گرفته و به زرین‌پال فرستاده می‌شود.
 const SHIPPING_FEES = {
-  standard: 85_000,
-  express: 145_000,
+  standard: 0,
+  express: 0,
   pickup: 0,
 } as const;
 

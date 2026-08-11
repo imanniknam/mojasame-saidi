@@ -1,8 +1,13 @@
 import type { CartDiscount } from "@/lib/cart/types";
 
-const FREE_SHIPPING_THRESHOLD_MINOR = 2_000_000;
-const DEFAULT_SHIPPING_MINOR = 85_000;
-const COURIER_SHIPPING_MINOR = 145_000;
+// هزینه‌ی ارسال فعلاً حذف شده (تصمیم موقت). آستانه هم صفر شد تا بنر
+// «با خرید بیشتر ارسال رایگان می‌شود» روی سبد نمایش داده نشود — چون
+// همین الان برای همه رایگان است. برای برگرداندن هزینه‌ها، همین سه
+// مقدار را در این فایل، checkout-flow.tsx و create-order.ts هم‌زمان
+// به مقدار واقعی برگردانید.
+const FREE_SHIPPING_THRESHOLD_MINOR = 0;
+const DEFAULT_SHIPPING_MINOR = 0;
+const COURIER_SHIPPING_MINOR = 0;
 
 export type CheckoutShippingMethod = "post" | "courier";
 

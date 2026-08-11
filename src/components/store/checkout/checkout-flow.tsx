@@ -53,6 +53,8 @@ const steps: { id: StepId; title: string; icon: typeof MapPin }[] = [
   { id: "confirmation", title: "تأیید", icon: CheckCircle2 },
 ];
 
+// هزینه‌ی ارسال فعلاً حذف شده (تصمیم موقت) — همراه با src/lib/cart/totals.ts
+// و src/lib/checkout/create-order.ts هم‌زمان به‌روزرسانی می‌شود.
 const shippingOptions: Record<
   ShippingMethod,
   {
@@ -66,13 +68,13 @@ const shippingOptions: Record<
     title: "ارسال معمولی",
     description: "پیشنهاد شده برای بیشتر سفارش‌ها",
     eta: "۲ تا ۴ روز کاری",
-    feeMinor: 85_000,
+    feeMinor: 0,
   },
   express: {
     title: "ارسال سریع",
     description: "مناسب سفارش‌های فوری",
     eta: "۱ تا ۲ روز کاری",
-    feeMinor: 145_000,
+    feeMinor: 0,
   },
   pickup: {
     title: "هماهنگی تلفنی (تماس پشتیبانی)",
