@@ -4,7 +4,7 @@ import { CategoryCard } from "@/components/store/category-card";
 import { ProductGrid } from "@/components/store/product-grid";
 import { Hero } from "@/components/home/hero";
 import { SectionHeader } from "@/components/home/section-header";
-import { BrandStory } from "@/components/home/brand-story";
+import { ProductSlider } from "@/components/home/product-slider";
 import {
   DEFAULT_VALUE_PROPS,
   ValueProps,
@@ -43,13 +43,6 @@ const HERO_COPY = {
   subtitleFa:
     "مجموعه‌ای از فاخرترین مجسمه‌های دکوراتیو برای خاص‌ترین فضاها.",
   ctaLabel: "مشاهده مجموعه",
-} as const;
-
-const STORY_COPY = {
-  titleFa: "داستان مجسمه سعیدی",
-  bodyFa:
-    "ما در مجسمه سعیدی، با عشق به هنر و جزئیات، آثاری خلق می‌کنیم که فراتر از دکوراسیون به فضاها شخصیت و اصالت می‌بخشند.\n\nهر مجسمه، نتیجه‌ی دقت در طراحی، کیفیت در ساخت و احترام به هنر کلاسیک و مدرن است.",
-  ctaLabel: "درباره ما",
 } as const;
 
 /**
@@ -224,13 +217,12 @@ export default async function RootPage() {
       <main>
         {rendered}
 
-        <BrandStory
-          titleFa={STORY_COPY.titleFa}
-          bodyFa={STORY_COPY.bodyFa}
-          ctaHref="/about"
-          ctaLabel={STORY_COPY.ctaLabel}
-          imageUrl="/images/brand/atelier-story.webp"
-          imageAlt="هنرمند در حال پرداخت جزئیات یک مجسمه کلاسیک"
+        <ProductSlider
+          titleFa="کاوش محصولات"
+          overline="Explore"
+          linkHref="/products"
+          linkLabel="مشاهده همه"
+          products={products.slice(0, 12)}
         />
       </main>
     </StoreShell>

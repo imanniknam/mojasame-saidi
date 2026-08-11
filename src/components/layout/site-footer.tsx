@@ -29,7 +29,6 @@ const COLUMNS = [
     links: [
       { href: "/products", label: "محصولات" },
       { href: "/categories", label: "مجموعه‌ها" },
-      { href: "/about", label: "درباره ما" },
       { href: "/contact", label: "تماس با ما" },
     ],
   },
