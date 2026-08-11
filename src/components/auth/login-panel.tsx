@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,8 +44,7 @@ type LoginSuccessPayload = {
 };
 
 export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
-  const router = useRouter();
-  const { setUser, refresh } = useSession();
+  const { setUser } = useSession();
   const copy = contentByMode[mode];
 
   const [phone, setPhone] = useState("");
@@ -124,9 +122,19 @@ export function LoginPanel({ mode = "customer", className }: LoginPanelProps) {
 
       setMessage("ورود موفق بود. در حال انتقال…");
       notifySessionChanged();
-      await refresh();
-      router.replace(redirectTo);
-      router.refresh();
+
+      /**
+       * ناوبری کامل مرورگر، نه router.replace/refresh.
+       *
+       * اگر کاربر قبل از ورود، لینک «حساب کاربری» را در هدر دیده باشد،
+       * Next.js آن مسیر را از قبل با محتوای «مهمان» پیش‌بارگذاری کرده — که
+       * همان ریدایرکت به لاگین در آن ذخیره شده. router.refresh() فقط صفحه‌ی
+       * فعلی را تازه می‌کند، نه کشِ پیش‌بارگذاریِ صفحات دیگر؛ نتیجه این بود که
+       * کاربر با موفقیت وارد می‌شد ولی کلیک روی «حساب کاربری»/«سفارش‌های من»
+       * دوباره به لاگین برمی‌گشت. window.location یک درخواست کاملاً تازه به
+       * سرور می‌زند و این کش را کامل دور می‌زند.
+       */
+      window.location.href = redirectTo;
     } catch {
       setError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
     } finally {

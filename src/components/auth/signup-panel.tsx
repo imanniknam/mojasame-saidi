@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2, Mail, Smartphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,7 @@ type SignupSuccessPayload = {
 const STRENGTH_LABELS = ["خیلی ضعیف", "ضعیف", "متوسط", "خوب", "قوی"] as const;
 
 export function SignupPanel({ className }: SignupPanelProps) {
-  const router = useRouter();
-  const { setUser, refresh } = useSession();
+  const { setUser } = useSession();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -98,11 +96,12 @@ export function SignupPanel({ className }: SignupPanelProps) {
 
       setMessage("حساب شما ساخته شد. در حال انتقال…");
       notifySessionChanged();
-      await refresh();
-      router.replace(
-        "redirectTo" in result && result.redirectTo ? result.redirectTo : "/",
-      );
-      router.refresh();
+
+      // ناوبری کامل مرورگر — دلیل دقیقاً همان چیزی است که در login-panel.tsx
+      // توضیح داده شده: بدون آن، لینک‌های پیش‌بارگذاری‌شده‌ی هدر از قبل از
+      // ورود (حالت مهمان) کاربر تازه‌ثبت‌نام‌شده را دوباره به لاگین می‌فرستادند.
+      window.location.href =
+        "redirectTo" in result && result.redirectTo ? result.redirectTo : "/";
     } catch {
       setError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
     } finally {
