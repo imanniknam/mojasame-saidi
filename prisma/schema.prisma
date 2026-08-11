@@ -617,8 +617,9 @@ model NewsletterSubscriber {
 model ContactMessage {
   id        String    @id @default(cuid())
   nameFa    String
-  email     String
-  phone     String?
+  /// اختیاری — شماره موبایل شناسه‌ی اصلی تماس است
+  email     String?
+  phone     String
   subjectFa String?
   bodyFa    String
   isRead    Boolean   @default(false)

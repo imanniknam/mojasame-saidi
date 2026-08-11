@@ -104,28 +104,28 @@ export function ContactForm() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="contact-email">
-            ایمیل <span className="text-primary">*</span>
+          <Label htmlFor="contact-phone">
+            شماره تماس <span className="text-primary">*</span>
           </Label>
           <Input
-            id="contact-email"
-            name="email"
-            type="email"
+            id="contact-phone"
+            name="phone"
+            type="tel"
             required
             dir="ltr"
-            autoComplete="email"
+            autoComplete="tel"
             className={FIELD_CLASS}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="contact-phone">شماره تماس</Label>
+          <Label htmlFor="contact-email">ایمیل (اختیاری)</Label>
           <Input
-            id="contact-phone"
-            name="phone"
-            type="tel"
+            id="contact-email"
+            name="email"
+            type="email"
             dir="ltr"
-            autoComplete="tel"
+            autoComplete="email"
             className={FIELD_CLASS}
           />
         </div>

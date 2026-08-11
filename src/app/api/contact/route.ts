@@ -11,16 +11,16 @@ const contactSchema = z.object({
     .trim()
     .min(2, "نام باید حداقل ۲ حرف باشد.")
     .max(80, "نام بیش از حد طولانی است."),
-  email: z
-    .string({ required_error: "ایمیل را وارد کنید." })
-    .trim()
-    .email("ایمیل معتبر نیست."),
+  /** اختیاری — فیلد خالی به undefined تبدیل می‌شود، نه رشته‌ی تهی */
+  email: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().email("ایمیل معتبر نیست.").max(160).optional(),
+  ),
   phone: z
-    .string()
+    .string({ required_error: "شماره تماس را وارد کنید." })
     .trim()
-    .max(20, "شماره تماس معتبر نیست.")
-    .optional()
-    .or(z.literal("")),
+    .min(8, "شماره تماس معتبر نیست.")
+    .max(20, "شماره تماس معتبر نیست."),
   subjectFa: z.string().trim().max(120).optional().or(z.literal("")),
   bodyFa: z
     .string({ required_error: "متن پیام را بنویسید." })
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
     await prisma.contactMessage.create({
       data: {
         nameFa: body.nameFa,
-        email: body.email.toLowerCase(),
-        phone: body.phone || null,
+        email: body.email ? body.email.toLowerCase() : null,
+        phone: body.phone,
         subjectFa: body.subjectFa || null,
         bodyFa: body.bodyFa,
       },
