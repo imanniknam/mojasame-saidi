@@ -47,7 +47,7 @@ export default async function CategoriesPage() {
               titleFa="مجموعه‌ای برای نمایش نیست"
               descriptionFa="در حال حاضر دسته‌بندی فعالی ثبت نشده است."
               ctaHref="/products"
-              ctaLabel="مشاهده همه آثار"
+              ctaLabel="مشاهده محصولات"
             />
           )}
         </div>

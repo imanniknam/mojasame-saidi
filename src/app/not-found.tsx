@@ -26,7 +26,7 @@ export default function NotFound() {
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Button variant="luxury" size="touch" className="px-6" asChild>
-          <Link href="/products">مشاهده همه آثار</Link>
+          <Link href="/products">مشاهده محصولات</Link>
         </Button>
         <Button variant="outline" size="touch" className="px-6" asChild>
           <Link href="/">صفحه اصلی</Link>

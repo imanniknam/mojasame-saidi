@@ -36,7 +36,7 @@ import { useNavigation } from "@/components/layout/navigation-context";
 
 const NAV_LINKS = [
   { href: "/", label: "صفحه اصلی" },
-  { href: "/products", label: "فروشگاه" },
+  { href: "/products", label: "محصولات" },
   { href: "/categories", label: "مجموعه‌ها" },
   { href: "/about", label: "درباره ما" },
   { href: "/contact", label: "تماس با ما" },

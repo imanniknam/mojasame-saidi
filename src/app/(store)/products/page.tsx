@@ -9,7 +9,7 @@ import { parseSort, sortProducts } from "@/lib/storefront/sort";
 import { safeQuery } from "@/lib/storefront/safe";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "همه آثار",
+  title: "محصولات",
   description:
     "خرید محصولات دست‌ساز و دکوراتیو مجسمه سعیدی؛ مجسمه، تندیس، گلدان، جاشمعی و دکور هنری.",
   path: "/products",
@@ -29,12 +29,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <main className="mb-nav">
       <div className="ds-container pt-6">
-        <Breadcrumbs items={[{ label: "خانه", href: "/" }, { label: "همه آثار" }]} />
+        <Breadcrumbs items={[{ label: "خانه", href: "/" }, { label: "محصولات" }]} />
       </div>
 
       <div className="ds-container py-8 lg:py-10">
         <p className="ds-overline">Shop</p>
-        <h1 className="ds-title mt-2 text-foreground">همه آثار</h1>
+        <h1 className="ds-title mt-2 text-foreground">محصولات</h1>
         <p className="ds-prose mt-3">
           انتخابی از مجسمه‌ها و دکورهای دست‌ساز برای خانه و فضای کاری.
         </p>

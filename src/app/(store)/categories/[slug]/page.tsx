@@ -82,7 +82,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               titleFa={`هنوز اثری در «${category.nameFa}» ثبت نشده`}
               descriptionFa="می‌توانید مجموعه‌های دیگر یا همه‌ی آثار را ببینید."
               ctaHref="/products"
-              ctaLabel="مشاهده همه آثار"
+              ctaLabel="مشاهده محصولات"
             />
           )}
         </div>
