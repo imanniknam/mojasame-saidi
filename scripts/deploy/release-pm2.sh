@@ -33,31 +33,40 @@ for host in api.zarinpal.com payment.zarinpal.com; do
     -H 'Content-Type: application/json' -d '{}' || echo "unreachable"
 done
 
-echo "==> بکاپ کامل ($APP_DIR-rollback-$STAMP)"
-cp -a "$APP_DIR" "$APP_DIR-rollback-$STAMP"
+if [ "${SKIP_BACKUP:-0}" = "1" ]; then
+  echo "==> بکاپ رد شد (SKIP_BACKUP=1)"
+else
+  echo "==> بکاپ کامل ($APP_DIR-rollback-$STAMP)"
+  cp -a "$APP_DIR" "$APP_DIR-rollback-$STAMP"
+fi
 
 echo "==> اتصال پوشه به مخزن git"
 # پوشه تا امروز چک‌اوت git نبود و فایل‌ها دستی کپی می‌شدند. بعد از این،
 # هر انتشار فقط یک fetch/reset است. فایل‌های خارج از git — .env،
 # .env.production، node_modules، .next و public/uploads — دست‌نخورده
 # می‌مانند چون در .gitignore هستند.
-if [ ! -d .git ]; then
-  git init -q
-  git remote add origin "$REPO"
-else
-  git remote set-url origin "$REPO"
-fi
-git fetch -q origin "$BRANCH"
-git reset -q --hard "origin/$BRANCH"
-echo "    نسخه: $(git rev-parse --short HEAD) — $(git log -1 --pretty=%s)"
-
+#
+# همه‌ی دستورهای git با کاربر app اجرا می‌شوند، نه root. اگر root آن‌ها را
+# بزند، .git مالکش root می‌شود و git با «dubious ownership» کار را رد
+# می‌کند — چون مالک پوشه‌ی کاری با کاربر جاری یکی نیست.
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+as_app() { su - "$APP_USER" -c "cd $APP_DIR && $1"; }
+
+if [ ! -d .git ]; then
+  as_app "git init -q"
+  as_app "git remote add origin $REPO"
+else
+  as_app "git remote set-url origin $REPO"
+fi
+as_app "git fetch -q origin $BRANCH"
+as_app "git reset -q --hard origin/$BRANCH"
+echo "    نسخه: $(as_app 'git rev-parse --short HEAD') — $(as_app 'git log -1 --pretty=%s')"
 
 echo "==> بیلد (چند دقیقه طول می‌کشد)"
 # next build روی همان .next می‌نویسد که next start از آن سرو می‌کند، پس
 # در این فاصله ممکن است چند درخواست خطا بگیرند. برای فروشگاهی در این
 # اندازه پذیرفتنی است؛ در ساعت کم‌ترافیک اجرا کنید.
-su - "$APP_USER" -c "cd $APP_DIR && npm run build"
+as_app "npm run build"
 
 echo "==> ری‌استارت"
 su - "$APP_USER" -c "pm2 restart $PM2_NAME --update-env"
