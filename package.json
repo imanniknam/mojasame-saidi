@@ -19,7 +19,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run lint && npm run typecheck && npm run db:validate"
+    "verify": "npm run lint && npm run typecheck && npm run db:validate",
+    "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy/deploy.ps1"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

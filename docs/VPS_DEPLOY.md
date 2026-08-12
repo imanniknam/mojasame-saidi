@@ -13,7 +13,22 @@ served by Vercel. The live setup is:
 | Proxy | nginx, TLS via Certbot |
 | Env | `.env` and `.env.production` in the app directory |
 
-To ship a new version, that is all you need:
+To ship a new version, from the project directory on Windows:
+
+```bash
+npm run deploy
+```
+
+`scripts/deploy/deploy.ps1` refuses to run with uncommitted changes or from
+the wrong branch, runs typecheck and lint locally (failing in seconds
+instead of after a three-minute build on the server), pushes, runs the
+release on the server, and finally checks `https://mojasamesaidi.ir/api/health`
+from outside rather than trusting the server's own report.
+
+Flags: `npm run deploy -- -WithBackup` also copies the app directory on the
+server first; `-SkipChecks` skips the local typecheck and lint.
+
+The equivalent by hand:
 
 ```bash
 ssh root@185.239.0.11 "curl -fsSL https://raw.githubusercontent.com/imanniknam/mojasame-saidi/main/scripts/deploy/release-pm2.sh -o /root/release.sh && bash /root/release.sh"
