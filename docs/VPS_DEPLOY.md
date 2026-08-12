@@ -1,9 +1,41 @@
 # VPS Deploy Guide
 
-Deploying MojasameSaidi.ir to a plain Ubuntu VPS (Node + systemd + nginx),
-as an alternative to Vercel. Target: `185.239.0.11`.
+## Current production layout — read this first
 
-Everything here is driven by four files in `scripts/deploy/`:
+`mojasamesaidi.ir` already runs on the VPS at `185.239.0.11`. It is **not**
+served by Vercel. The live setup is:
+
+| Piece | Value |
+| --- | --- |
+| App directory | `/var/www/mojasame-saidi` (owner `app`) |
+| Process manager | PM2 as user `app`, process name `mojasame-saidi` |
+| Server | `next start` on `127.0.0.1:3000` |
+| Proxy | nginx, TLS via Certbot |
+| Env | `.env` and `.env.production` in the app directory |
+
+To ship a new version, that is all you need:
+
+```bash
+ssh root@185.239.0.11 "curl -fsSL https://raw.githubusercontent.com/imanniknam/mojasame-saidi/main/scripts/deploy/release-pm2.sh -o /root/release.sh && bash /root/release.sh"
+```
+
+`release-pm2.sh` backs the directory up, syncs it to `origin/main`, builds,
+restarts PM2, waits for `/api/health`, and prints the rollback command. On
+failure it exits non-zero with the PM2 log attached.
+
+> **Do not run `provision.sh` on this server.** It provisions a *fresh*
+> machine: it rewrites `/etc/nginx/sites-enabled`, removes the default site,
+> installs a competing systemd unit on port 3000, and clones into
+> `/srv/mojasame`. On the live host that takes the store down. The rest of
+> this document describes that from-scratch path for a new server.
+
+---
+
+## From-scratch setup (new server only)
+
+Node + systemd + nginx on a plain Ubuntu VPS.
+
+Everything below is driven by files in `scripts/deploy/`:
 
 | File | Purpose |
 | --- | --- |
