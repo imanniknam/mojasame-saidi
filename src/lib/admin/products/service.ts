@@ -50,8 +50,20 @@ export async function createProductRecord(input: ProductCreateInput) {
   });
 }
 
+/**
+ * ذخیره‌ی محصول — نوشتن‌ها داخل تراکنش، خواندن بیرون از آن.
+ *
+ * هر عبارت داخل تراکنش یک رفت‌وبرگشت کامل به دیتابیسِ راه‌دور است (اندازه‌گیری
+ * روی همین دیتابیس: ~۲۰۰ میلی‌ثانیه هرکدام). با شش عبارتِ نوشتن، خواندنِ
+ * نهایی هم که داخل تراکنش بود پنجره را تا نزدیکِ پنج ثانیه می‌برد — همان سقفی
+ * که Prisma به‌طور پیش‌فرض دارد. نتیجه: ذخیره‌ی محصول گاهی شکست می‌خورد و در
+ * پنل به‌شکل «اتصال دیتابیس را بررسی کنید» دیده می‌شد.
+ *
+ * خواندنِ نتیجه به اتمی‌بودن نوشتن‌ها ربطی ندارد، پس بعد از commit انجام
+ * می‌شود و پنجره‌ی تراکنش کوتاه می‌ماند.
+ */
 export async function updateProductRecord(id: string, input: ProductUpdateInput) {
-  return prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     await tx.product.update({
       where: { id },
       data: {
@@ -115,10 +127,11 @@ export async function updateProductRecord(id: string, input: ProductUpdateInput)
       }
     }
 
-    return tx.product.findUniqueOrThrow({
-      where: { id },
-      include: productDetailInclude,
-    });
+  });
+
+  return prisma.product.findUniqueOrThrow({
+    where: { id },
+    include: productDetailInclude,
   });
 }
 
