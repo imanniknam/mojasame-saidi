@@ -12,6 +12,12 @@ export const storeCheckoutSchema = z.object({
     .array(
       z.object({
         productId: z.string().min(1),
+        /**
+         * بدون این فیلد، Zod آن را از payload حذف می‌کرد و سرور قیمت را با
+         * قیمت پایه‌ی محصول می‌سنجید — یعنی هر محصولِ سایزدار با خطای
+         * «قیمت محصول تغییر کرده است» رد می‌شد و اصلاً قابل خرید نبود.
+         */
+        variantId: z.string().min(1).optional(),
         quantity: z.number().int().min(1).max(99),
         unitMinor: z.number().int().min(0),
       }),

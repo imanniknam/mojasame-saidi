@@ -8,8 +8,22 @@ export function useCartHydration() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    void useCartStore.persist.rehydrate();
-    setReady(true);
+    let active = true;
+    const markReady = () => {
+      if (active) setReady(true);
+    };
+    const unsubscribe = useCartStore.persist.onFinishHydration(markReady);
+
+    if (useCartStore.persist.hasHydrated()) {
+      markReady();
+    } else {
+      void useCartStore.persist.rehydrate();
+    }
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   return ready;

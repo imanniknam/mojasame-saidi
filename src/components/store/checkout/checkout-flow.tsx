@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import {
   CheckCircle2,
+  CircleAlert,
   CreditCard,
   Home,
   MapPin,
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { RetryZarinpalButton } from "@/components/store/checkout/retry-zarinpal-button";
 
 type StepId = "address" | "shipping" | "payment" | "confirmation";
 type ShippingMethod = "standard" | "express" | "pickup";
@@ -182,6 +184,7 @@ export function CheckoutFlow() {
   const [payment, setPayment] = useState<PaymentMethod>("online");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [paymentStartError, setPaymentStartError] = useState<string | null>(null);
   const [confirmation, setConfirmation] =
     useState<ConfirmationSnapshot | null>(null);
 
@@ -199,6 +202,8 @@ export function CheckoutFlow() {
   const displayAddress = confirmation?.address ?? address;
   const displayShipping = confirmation?.shipping ?? shipping;
   const displayPayment = confirmation?.payment ?? payment;
+  const paymentNeedsRetry =
+    confirmation?.payment === "online" && paymentStartError != null;
 
   function updateField(field: keyof AddressValues, value: string) {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -248,7 +253,11 @@ export function CheckoutFlow() {
         ok?: boolean;
         order?: { orderNumber: string; trackingToken?: string };
         totals?: CartTotals;
-        payment?: { provider: "ZARINPAL" | "MANUAL"; gatewayUrl: string | null };
+        payment?: {
+          provider: "ZARINPAL" | "MANUAL";
+          gatewayUrl: string | null;
+          startError?: string;
+        };
         error?: { message?: string };
       };
 
@@ -260,7 +269,6 @@ export function CheckoutFlow() {
       const nextOrder = payload.order.orderNumber;
 
       if (payload.payment?.gatewayUrl) {
-        clearCart();
         toast.message("در حال انتقال به درگاه زرین‌پال…");
         window.location.assign(payload.payment.gatewayUrl);
         return;
@@ -277,6 +285,17 @@ export function CheckoutFlow() {
         payment,
       });
       setStep("confirmation");
+
+      if (payload.payment?.provider === "ZARINPAL") {
+        const startError =
+          payload.payment.startError ??
+          "اتصال به درگاه انجام نشد. می‌توانید همین سفارش را دوباره پرداخت کنید.";
+        setPaymentStartError(startError);
+        toast.error(startError);
+        return;
+      }
+
+      setPaymentStartError(null);
       clearCart();
       toast.success(
         payment === "cardToCard"
@@ -339,7 +358,10 @@ export function CheckoutFlow() {
             <h1 className="ds-display text-2xl sm:text-3xl">تکمیل سفارش</h1>
           </div>
           {orderNumber ? (
-            <Badge variant="success" className="min-h-8 px-3">
+            <Badge
+              variant={paymentNeedsRetry ? "destructive" : "success"}
+              className="min-h-8 px-3"
+            >
               شماره سفارش: {orderNumber}
             </Badge>
           ) : null}
@@ -590,7 +612,13 @@ export function CheckoutFlow() {
                       onClick={() => void placeOrder()}
                       disabled={placingOrder}
                     >
-                      {placingOrder ? "در حال ثبت…" : "ثبت سفارش"}
+                      {placingOrder
+                        ? payment === "online"
+                          ? "در حال اتصال به درگاه…"
+                          : "در حال ثبت…"
+                        : payment === "online"
+                          ? "انتقال به درگاه پرداخت"
+                          : "ثبت سفارش"}
                     </Button>
                   </div>
                 </div>
@@ -600,16 +628,36 @@ export function CheckoutFlow() {
             {step === "confirmation" ? (
               <div key="confirmation">
                 <div className="space-y-6 border border-border bg-card p-6 text-center sm:p-8">
-                  <div className="mx-auto flex size-16 items-center justify-center rounded-none bg-emerald-50 text-emerald-700 shadow-elegant dark:bg-emerald-950 dark:text-emerald-300">
-                    <CheckCircle2 className="size-9" aria-hidden />
+                  <div
+                    className={cn(
+                      "mx-auto flex size-16 items-center justify-center rounded-none shadow-elegant",
+                      paymentNeedsRetry
+                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+                    )}
+                  >
+                    {paymentNeedsRetry ? (
+                      <CircleAlert className="size-9" aria-hidden />
+                    ) : (
+                      <CheckCircle2 className="size-9" aria-hidden />
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <h2 className="ds-title">سفارش شما ثبت شد</h2>
+                    <h2 className="ds-title">
+                      {paymentNeedsRetry
+                        ? "سفارش ثبت شد؛ اتصال به درگاه انجام نشد"
+                        : "سفارش شما ثبت شد"}
+                    </h2>
                     <p className="ds-subtitle mx-auto max-w-md">
-                      شماره سفارش {confirmation?.orderNumber ?? orderNumber} است. جزئیات سفارش برای پیگیری ذخیره شد.
+                      {paymentNeedsRetry
+                        ? paymentStartError
+                        : `شماره سفارش ${confirmation?.orderNumber ?? orderNumber} است. جزئیات سفارش برای پیگیری ذخیره شد.`}
                     </p>
                   </div>
                   <div className="flex flex-col justify-center gap-2 sm:flex-row">
+                    {paymentNeedsRetry && orderNumber ? (
+                      <RetryZarinpalButton orderNumber={orderNumber} />
+                    ) : null}
                     <Button variant="luxury" size="touch" asChild>
                       <Link href="/">ادامه خرید</Link>
                     </Button>
@@ -716,7 +764,13 @@ export function CheckoutFlow() {
                 onClick={() => void placeOrder()}
                 disabled={placingOrder}
               >
-                {placingOrder ? "در حال ثبت…" : "ثبت سفارش"}
+                {placingOrder
+                  ? payment === "online"
+                    ? "در حال اتصال…"
+                    : "در حال ثبت…"
+                  : payment === "online"
+                    ? "انتقال به درگاه"
+                    : "ثبت سفارش"}
               </Button>
             ) : null}
           </div>

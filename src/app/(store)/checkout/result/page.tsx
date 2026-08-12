@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Home, PackageCheck, XCircle } from "lucide-react";
 import { RetryZarinpalButton } from "@/components/store/checkout/retry-zarinpal-button";
+import { PaymentResultCartCleanup } from "@/components/store/checkout/payment-result-cart-cleanup";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -34,6 +35,7 @@ export default async function CheckoutResultPage({ searchParams }: ResultPagePro
       <Card elevated className="space-y-6 p-8">
         {success ? (
           <>
+            <PaymentResultCartCleanup />
             <CheckCircle2 className="mx-auto size-16 text-emerald-500" strokeWidth={1.4} />
             <div className="space-y-2">
               <h1 className="ds-title text-2xl">پرداخت موفق بود</h1>
