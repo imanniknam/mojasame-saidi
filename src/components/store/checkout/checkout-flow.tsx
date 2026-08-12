@@ -25,8 +25,16 @@ import { cn } from "@/lib/utils";
 import { RetryZarinpalButton } from "@/components/store/checkout/retry-zarinpal-button";
 
 type StepId = "address" | "shipping" | "payment" | "confirmation";
-type ShippingMethod = "standard" | "express" | "pickup";
-type PaymentMethod = "online" | "cardToCard";
+/**
+ * فعلاً فقط یک روش ارسال و یک روش پرداخت.
+ *
+ * ساختار Record و آرایه‌ی گزینه‌ها عمداً باقی مانده تا برگرداندن گزینه‌های
+ * دیگر فقط اضافه‌کردن یک کلید باشد. اگر گزینه‌ای اضافه شد، باید هم‌زمان در
+ * `src/lib/validations/store-checkout.ts` و `src/lib/checkout/create-order.ts`
+ * هم اضافه شود، وگرنه سرور همان مقدار را رد می‌کند.
+ */
+type ShippingMethod = "standard";
+type PaymentMethod = "online";
 
 type AddressValues = {
   fullName: string;
@@ -70,19 +78,6 @@ const shippingOptions: Record<
     title: "ارسال معمولی",
     description: "پیشنهاد شده برای بیشتر سفارش‌ها",
     eta: "۲ تا ۴ روز کاری",
-    feeMinor: 0,
-  },
-  express: {
-    title: "ارسال سریع",
-    description: "مناسب سفارش‌های فوری",
-    eta: "۱ تا ۲ روز کاری",
-    feeMinor: 0,
-  },
-  pickup: {
-    title: "هماهنگی تلفنی (تماس پشتیبانی)",
-    description:
-      "پس از ثبت سفارش، کارشناس ما با شماره موبایلی که وارد کرده‌اید تماس می‌گیرد و هزینه ارسال، زمان و روش تحویل را هماهنگ می‌کند",
-    eta: "طبق تماس تیم پشتیبانی",
     feeMinor: 0,
   },
 };
@@ -188,8 +183,7 @@ export function CheckoutFlow() {
   const [confirmation, setConfirmation] =
     useState<ConfirmationSnapshot | null>(null);
 
-  const shippingFeeOverride =
-    shipping === "standard" ? undefined : shippingOptions[shipping].feeMinor;
+  const shippingFeeOverride = undefined;
   const totals = useMemo(
     () => computeCartTotals(lines, discount, shippingFeeOverride),
     [lines, discount, shippingFeeOverride],
@@ -297,11 +291,7 @@ export function CheckoutFlow() {
 
       setPaymentStartError(null);
       clearCart();
-      toast.success(
-        payment === "cardToCard"
-          ? "سفارش ثبت شد. پرداخت کارت‌به‌کارت را انجام دهید."
-          : "سفارش شما ثبت شد.",
-      );
+      toast.success("سفارش شما ثبت شد.");
     } catch {
       toast.error("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
     } finally {
@@ -558,7 +548,7 @@ export function CheckoutFlow() {
                   <div className="space-y-1 text-start">
                     <h2 className="ds-heading">روش پرداخت</h2>
                     <p className="ds-subtitle">
-                      پرداخت امن آنلاین پیشنهاد می‌شود؛ ثبت سفارش در هر دو حالت ساده است.
+                      پرداخت از درگاه امن زرین‌پال انجام می‌شود.
                     </p>
                   </div>
                   <div className="grid gap-3">
@@ -568,12 +558,6 @@ export function CheckoutFlow() {
                         title: "پرداخت آنلاین (زرین‌پال)",
                         desc: "انتقال به درگاه امن zarinpal.com برای پرداخت کارت",
                         icon: ShieldCheck,
-                      },
-                      {
-                        id: "cardToCard" as const,
-                        title: "کارت به کارت",
-                        desc: "پس از ثبت، پشتیبانی برای هماهنگی تماس می‌گیرد",
-                        icon: CreditCard,
                       },
                     ].map((option) => {
                       const active = payment === option.id;
@@ -612,13 +596,7 @@ export function CheckoutFlow() {
                       onClick={() => void placeOrder()}
                       disabled={placingOrder}
                     >
-                      {placingOrder
-                        ? payment === "online"
-                          ? "در حال اتصال به درگاه…"
-                          : "در حال ثبت…"
-                        : payment === "online"
-                          ? "انتقال به درگاه پرداخت"
-                          : "ثبت سفارش"}
+                      {placingOrder ? "در حال اتصال به درگاه…" : "انتقال به درگاه پرداخت"}
                     </Button>
                   </div>
                 </div>
@@ -689,9 +667,7 @@ export function CheckoutFlow() {
               </div>
               <div className="flex items-center justify-between gap-3 text-start">
                 <span className="text-muted-foreground">پرداخت</span>
-                <span className="truncate font-semibold">
-                  {displayPayment === "online" ? "آنلاین" : "کارت به کارت"}
-                </span>
+                <span className="truncate font-semibold">آنلاین (زرین‌پال)</span>
               </div>
               {displayAddress.city ? (
                 <div className="flex items-center justify-between gap-3 text-start">
@@ -764,13 +740,7 @@ export function CheckoutFlow() {
                 onClick={() => void placeOrder()}
                 disabled={placingOrder}
               >
-                {placingOrder
-                  ? payment === "online"
-                    ? "در حال اتصال…"
-                    : "در حال ثبت…"
-                  : payment === "online"
-                    ? "انتقال به درگاه"
-                    : "ثبت سفارش"}
+                {placingOrder ? "در حال اتصال…" : "انتقال به درگاه"}
               </Button>
             ) : null}
           </div>

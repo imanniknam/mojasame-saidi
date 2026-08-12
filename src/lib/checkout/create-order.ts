@@ -24,8 +24,8 @@ export type CheckoutAddressInput = {
 export type CreateOrderInput = {
   lines: CheckoutLineInput[];
   discount: CartDiscount | null;
-  shipping: "standard" | "express" | "pickup";
-  payment: "online" | "cardToCard";
+  shipping: "standard";
+  payment: "online";
   address: CheckoutAddressInput;
   sessionUser: AuthenticatedUser | null;
 };
@@ -35,8 +35,6 @@ export type CreateOrderInput = {
 // است که واقعاً از مشتری گرفته و به زرین‌پال فرستاده می‌شود.
 const SHIPPING_FEES = {
   standard: 0,
-  express: 0,
-  pickup: 0,
 } as const;
 
 function generateOrderNumber() {
@@ -264,7 +262,7 @@ export async function createStoreOrder(input: CreateOrderInput) {
             },
             payments: {
               create: {
-                provider: input.payment === "online" ? "ZARINPAL" : "MANUAL",
+                provider: "ZARINPAL",
                 status: "PENDING",
                 amountMinor: totals.totalMinor,
               },

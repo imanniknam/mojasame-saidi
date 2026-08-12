@@ -89,53 +89,41 @@ export async function POST(request: Request) {
       totals,
     };
 
-    if (body.payment === "online") {
-      try {
-        const gateway = await startZarinpalPaymentForOrder({
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          amountMinor: order.totalMinor,
-          mobile: body.address.phone,
-          // حساب‌های موبایل‌محور ایمیل ندارند؛ زرین‌پال ایمیل را اختیاری می‌گیرد.
-          email: sessionUser?.email ?? undefined,
-        });
+    try {
+      const gateway = await startZarinpalPaymentForOrder({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        amountMinor: order.totalMinor,
+        mobile: body.address.phone,
+        // حساب‌های موبایل‌محور ایمیل ندارند؛ زرین‌پال ایمیل را اختیاری می‌گیرد.
+        email: sessionUser?.email ?? undefined,
+      });
 
-        return jsonNoStore({
-          ...basePayload,
-          payment: {
-            provider: "ZARINPAL" as const,
-            gatewayUrl: gateway.gatewayUrl,
-          },
-        });
-      } catch (gatewayError) {
-        const msg = gatewayError instanceof Error ? gatewayError.message : "";
-        const mapped = ERROR_MESSAGES[msg];
-        const startError =
-          mapped?.message ??
-          `خطا در اتصال به درگاه پرداخت زرین‌پال: ${msg || "لطفاً دوباره تلاش کنید."}`;
+      return jsonNoStore({
+        ...basePayload,
+        payment: {
+          provider: "ZARINPAL" as const,
+          gatewayUrl: gateway.gatewayUrl,
+        },
+      });
+    } catch (gatewayError) {
+      const msg = gatewayError instanceof Error ? gatewayError.message : "";
+      const mapped = ERROR_MESSAGES[msg];
+      const startError =
+        mapped?.message ??
+        `خطا در اتصال به درگاه پرداخت زرین‌پال: ${msg || "لطفاً دوباره تلاش کنید."}`;
 
-        // سفارش قبلاً ثبت و موجودی کسر شده است؛ پاسخ موفقِ بدون URL باعث می‌شود
-        // کلاینت همان سفارش را برای Retry نگه دارد و سفارش تکراری نسازد.
-        return jsonNoStore(
-          {
-            ...basePayload,
-            payment: {
-              provider: "ZARINPAL" as const,
-              gatewayUrl: null,
-              startError,
-            },
-          },
-        );
-      }
+      // سفارش قبلاً ثبت و موجودی کسر شده است؛ پاسخ موفقِ بدون URL باعث می‌شود
+      // کلاینت همان سفارش را برای Retry نگه دارد و سفارش تکراری نسازد.
+      return jsonNoStore({
+        ...basePayload,
+        payment: {
+          provider: "ZARINPAL" as const,
+          gatewayUrl: null,
+          startError,
+        },
+      });
     }
-
-    return jsonNoStore({
-      ...basePayload,
-      payment: {
-        provider: "MANUAL" as const,
-        gatewayUrl: null,
-      },
-    });
   } catch (error) {
     if (error instanceof ZodError) {
       return jsonNoStore(

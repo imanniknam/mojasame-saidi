@@ -46,8 +46,11 @@ export const storeCheckoutSchema = z.object({
     })
     .nullable()
     .optional(),
-  shipping: z.enum(["standard", "express", "pickup"]),
-  payment: z.enum(["online", "cardToCard"]),
+  // فعلاً تک‌گزینه‌ای. برای برگرداندن گزینه‌های دیگر، این‌ها و
+  // `SHIPPING_FEES` در create-order.ts و لیست‌های checkout-flow.tsx باید
+  // هم‌زمان عوض شوند، وگرنه فرم گزینه‌ای نشان می‌دهد که سرور ردش می‌کند.
+  shipping: z.enum(["standard"]),
+  payment: z.enum(["online"]),
   address: z.object({
     fullName: z.string().trim().min(2, "نام گیرنده را وارد کنید."),
     phone: phoneSchema,
