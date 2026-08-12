@@ -291,6 +291,17 @@ export async function createStoreOrder(input: CreateOrderInput) {
         }
 
         return created;
+      }, {
+        /**
+         * سقف پیش‌فرض Prisma برای تراکنش تعاملی ۵ ثانیه است و روی دیتابیس
+         * راه‌دور کم می‌آورد: هر کوئری یک رفت‌وبرگشت شبکه دارد و این تراکنش
+         * چند کوئری پشت‌سرهم می‌زند (کسر موجودی هر محصول، ساخت سفارش با
+         * اقلام و پرداخت، و شمارنده‌ی کد تخفیف). در تولید با
+         * «Transaction already closed: ... 5737 ms passed» شکست می‌خورد و
+         * مشتری خطای ثبت سفارش می‌گرفت.
+         */
+        timeout: 20_000,
+        maxWait: 10_000,
       });
 
       return { order, totals };
