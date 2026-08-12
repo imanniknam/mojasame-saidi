@@ -13,7 +13,7 @@ export async function startZarinpalPaymentForOrder(input: {
     throw new Error("ZARINPAL_NOT_CONFIGURED");
   }
 
-  const payment = await prisma.payment.findFirst({
+  let payment = await prisma.payment.findFirst({
     where: {
       orderId: input.orderId,
       provider: "ZARINPAL",
@@ -23,7 +23,16 @@ export async function startZarinpalPaymentForOrder(input: {
   });
 
   if (!payment) {
-    throw new Error("PAYMENT_NOT_FOUND");
+    // پس از لغو درگاه، رکورد قبلی FAILED است. برای تلاش مجدد یک پرداخت تازه
+    // می‌سازیم تا دکمه «پرداخت مجدد» واقعاً قابل استفاده باشد.
+    payment = await prisma.payment.create({
+      data: {
+        orderId: input.orderId,
+        provider: "ZARINPAL",
+        status: "PENDING",
+        amountMinor: input.amountMinor,
+      },
+    });
   }
 
   const description = `پرداخت سفارش ${input.orderNumber} — مجسمه‌سازی سعیدی`;

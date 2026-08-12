@@ -12,9 +12,15 @@ export function getZarinpalConfig(): ZarinpalConfig | null {
   const merchantId = process.env.ZARINPAL_MERCHANT_ID?.trim();
   if (!merchantId) return null;
 
-  const sandbox =
-    process.env.ZARINPAL_SANDBOX === "true" ||
-    (process.env.NODE_ENV !== "production" && process.env.ZARINPAL_SANDBOX !== "false");
+  /**
+   * sandbox فقط با انتخاب صریح.
+   *
+   * قبلاً در حالت توسعه به‌طور پیش‌فرض روشن بود، ولی `sandbox.zarinpal.com`
+   * دیگر توسط زرین‌پال سرویس داده نمی‌شود: درخواست تا سقف timeout معطل می‌ماند
+   * و بعد `/pg/StartPay/...` همان دامنه ۴۰۴ می‌دهد. یعنی پیش‌فرضِ «امن» عملاً
+   * پرداخت را در توسعه همیشه خراب می‌کرد.
+   */
+  const sandbox = process.env.ZARINPAL_SANDBOX === "true";
 
   const callbackFromEnv = process.env.PAYMENT_CALLBACK_URL?.trim();
   const callbackUrl =
@@ -22,7 +28,10 @@ export function getZarinpalConfig(): ZarinpalConfig | null {
       ? callbackFromEnv
       : new URL("/api/payments/zarinpal/callback", getSiteUrl()).toString();
 
-  const apiBaseUrl = sandbox ? "https://sandbox.zarinpal.com" : "https://api.zarinpal.com";
+  // دامنه‌ی فعلی REST و StartPay مطابق SDK رسمی زرین‌پال.
+  const apiBaseUrl = sandbox
+    ? "https://sandbox.zarinpal.com"
+    : "https://payment.zarinpal.com";
 
   /**
    * دامنه‌ی اختصاصی درگاه (مثلاً pay.mojasamesaidi.ir).
@@ -35,7 +44,7 @@ export function getZarinpalConfig(): ZarinpalConfig | null {
     ? "https://sandbox.zarinpal.com"
     : customDomain
       ? `https://${customDomain}`
-      : "https://www.zarinpal.com";
+      : "https://payment.zarinpal.com";
 
   return {
     merchantId,

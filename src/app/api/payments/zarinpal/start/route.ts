@@ -29,16 +29,9 @@ export async function POST(request: Request) {
         orderNumber: body.orderNumber,
         status: "AWAITING_PAYMENT",
       },
-      include: {
-        payments: {
-          where: { provider: "ZARINPAL", status: "PENDING" },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      },
     });
 
-    if (!order?.payments[0]) {
+    if (!order) {
       return jsonNoStore(
         {
           ok: false,
@@ -84,6 +77,19 @@ export async function POST(request: Request) {
           },
         },
         { status: 503 },
+      );
+    }
+
+    if (error instanceof Error && error.message === "ZARINPAL_TIMEOUT") {
+      return jsonNoStore(
+        {
+          ok: false,
+          error: {
+            code: "ZARINPAL_TIMEOUT",
+            message: "پاسخ زرین‌پال بیش از حد طول کشید. لطفاً دوباره تلاش کنید.",
+          },
+        },
+        { status: 504 },
       );
     }
 

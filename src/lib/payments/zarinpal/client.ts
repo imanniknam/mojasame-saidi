@@ -24,6 +24,25 @@ type VerifyPaymentData = ZarinpalDataBase & {
   fee?: number;
 };
 
+const ZARINPAL_REQUEST_TIMEOUT_MS = 12_000;
+
+async function fetchZarinpal(url: string, init: RequestInit) {
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: AbortSignal.timeout(ZARINPAL_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.name === "AbortError" || error.name === "TimeoutError")
+    ) {
+      throw new Error("ZARINPAL_TIMEOUT");
+    }
+    throw error;
+  }
+}
+
 async function postZarinpal<T extends ZarinpalDataBase>(
   path: string,
   body: Record<string, unknown>,
@@ -33,7 +52,7 @@ async function postZarinpal<T extends ZarinpalDataBase>(
     throw new Error("ZARINPAL_NOT_CONFIGURED");
   }
 
-  const response = await fetch(`${config.apiBaseUrl}/pg/v4/payment/${path}`, {
+  const response = await fetchZarinpal(`${config.apiBaseUrl}/pg/v4/payment/${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -97,7 +116,7 @@ export async function zarinpalVerifyPayment(input: {
   const config = getZarinpalConfig();
   if (!config) throw new Error("ZARINPAL_NOT_CONFIGURED");
 
-  const response = await fetch(`${config.apiBaseUrl}/pg/v4/payment/verify.json`, {
+  const response = await fetchZarinpal(`${config.apiBaseUrl}/pg/v4/payment/verify.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -2,6 +2,7 @@ import { ZodError } from "zod";
 import { getActiveSessionUserFromRequest } from "@/lib/auth/server";
 import { ensureAuthSchemaReady } from "@/lib/auth/db";
 import { createStoreOrder } from "@/lib/checkout/create-order";
+import { isZarinpalEnabled } from "@/lib/payments/zarinpal/config";
 import { startZarinpalPaymentForOrder } from "@/lib/payments/zarinpal/service";
 import { jsonNoStore, apiErrorResponse } from "@/lib/server/api-response";
 import { storeCheckoutSchema } from "@/lib/validations/store-checkout";
@@ -41,6 +42,12 @@ const ERROR_MESSAGES: Record<string, { code: string; message: string; status: nu
     message: "رکورد پرداخت یافت نشد. لطفاً دوباره تلاش کنید.",
     status: 500,
   },
+  ZARINPAL_TIMEOUT: {
+    code: "ZARINPAL_TIMEOUT",
+    message:
+      "پاسخ زرین‌پال بیش از حد طول کشید. سفارش شما ذخیره شد و می‌توانید دوباره برای پرداخت تلاش کنید.",
+    status: 504,
+  },
 };
 
 export async function POST(request: Request) {
@@ -54,6 +61,16 @@ export async function POST(request: Request) {
 
   try {
     const body = storeCheckoutSchema.parse(await request.json());
+
+    // پیش از ساخت سفارش و کم‌کردن موجودی، نبود تنظیمات درگاه را اعلام کن.
+    if (body.payment === "online" && !isZarinpalEnabled()) {
+      const error = ERROR_MESSAGES.ZARINPAL_NOT_CONFIGURED;
+      return jsonNoStore(
+        { ok: false, error: { code: error.code, message: error.message } },
+        { status: error.status },
+      );
+    }
+
     const sessionUser = await getActiveSessionUserFromRequest(request);
     const { order, totals } = await createStoreOrder({
       ...body,
@@ -93,21 +110,21 @@ export async function POST(request: Request) {
       } catch (gatewayError) {
         const msg = gatewayError instanceof Error ? gatewayError.message : "";
         const mapped = ERROR_MESSAGES[msg];
-        if (mapped) {
-          return jsonNoStore(
-            { ok: false, error: { code: mapped.code, message: mapped.message } },
-            { status: mapped.status },
-          );
-        }
+        const startError =
+          mapped?.message ??
+          `خطا در اتصال به درگاه پرداخت زرین‌پال: ${msg || "لطفاً دوباره تلاش کنید."}`;
+
+        // سفارش قبلاً ثبت و موجودی کسر شده است؛ پاسخ موفقِ بدون URL باعث می‌شود
+        // کلاینت همان سفارش را برای Retry نگه دارد و سفارش تکراری نسازد.
         return jsonNoStore(
           {
-            ok: false,
-            error: {
-              code: "GATEWAY_ERROR",
-              message: `خطا در اتصال به درگاه پرداخت زرین‌پال: ${msg || "لطفاً دوباره تلاش کنید."}`,
+            ...basePayload,
+            payment: {
+              provider: "ZARINPAL" as const,
+              gatewayUrl: null,
+              startError,
             },
           },
-          { status: 502 },
         );
       }
     }
