@@ -34,6 +34,8 @@ export type ProductCardProps = {
   defaultFavorite?: boolean;
   showFavorite?: boolean;
   showQuickAdd?: boolean;
+  /** محصول سایز دارد؟ افزودن سریع جایش را به لینک انتخاب سایز می‌دهد */
+  hasVariants?: boolean;
   /** فقط برای کارت اول شبکه — بارگذاری زودهنگام تصویر */
   priority?: boolean;
 };
@@ -71,6 +73,7 @@ export function ProductCard({
   defaultFavorite = false,
   showFavorite = true,
   showQuickAdd = true,
+  hasVariants = false,
   priority = false,
 }: ProductCardProps) {
   const discountPercent = resolveDiscountPercent(
@@ -151,6 +154,7 @@ export function ProductCard({
               imageUrl={imageUrl}
               priceMinor={priceMinor}
               href={href}
+              hasVariants={hasVariants}
               compact
               className="size-9 min-h-0 min-w-0 shrink-0"
             />

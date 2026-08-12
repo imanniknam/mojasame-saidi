@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
-import { Check, Heart, Loader2, ShoppingBag } from "lucide-react";
+import { Check, Heart, Loader2, Ruler, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { useFavoritesStore } from "@/lib/stores/favorites-store";
@@ -88,6 +89,11 @@ export type QuickAddButtonProps = {
   className?: string;
   /** حالت آیکونی برای نوار اطلاعات کارت */
   compact?: boolean;
+  /**
+   * محصول سایز دارد؟ اگر بله، افزودن سریع معنی ندارد — کاربر باید در صفحه‌ی
+   * محصول سایز را انتخاب کند، وگرنه خطی با قیمت پایه و بدون سایز ساخته می‌شود.
+   */
+  hasVariants?: boolean;
 };
 
 export function QuickAddButton({
@@ -98,6 +104,7 @@ export function QuickAddButton({
   href,
   className,
   compact = false,
+  hasVariants = false,
 }: QuickAddButtonProps) {
   const [state, setState] = useState<"idle" | "adding" | "added">("idle");
 
@@ -116,7 +123,11 @@ export function QuickAddButton({
 
       setState("adding");
       const { lines, addLine, setQuantity } = useCartStore.getState();
-      const existing = lines.find((line) => line.productId === productId);
+      // فقط خطِ بدون سایز؛ وگرنه کلیک روی کارت، تعدادِ سایزِ انتخاب‌شده‌ی
+      // دیگری را زیاد می‌کرد و مشتری قیمت اشتباه می‌پرداخت.
+      const existing = lines.find(
+        (line) => line.productId === productId && !line.variantId,
+      );
       if (existing) {
         setQuantity(existing.id, existing.quantity + 1);
       } else {
@@ -129,6 +140,23 @@ export function QuickAddButton({
   );
 
   if (priceMinor == null) return null;
+
+  // محصول سایزدار: به‌جای افزودن، به صفحه‌ی محصول می‌فرستیم تا سایز انتخاب شود.
+  if (hasVariants) {
+    return (
+      <Link
+        href={href ?? "/products"}
+        aria-label={`انتخاب سایز برای ${titleFa}`}
+        className={cn(
+          "ds-touch-target inline-flex items-center justify-center rounded-sm border border-border/70 text-muted-foreground",
+          "transition-colors duration-fast ease-out hover:border-primary/50 hover:text-primary",
+          className,
+        )}
+      >
+        <Ruler className="size-[1.05rem] stroke-[1.6]" aria-hidden />
+      </Link>
+    );
+  }
 
   const Icon = state === "adding" ? Loader2 : state === "added" ? Check : ShoppingBag;
 

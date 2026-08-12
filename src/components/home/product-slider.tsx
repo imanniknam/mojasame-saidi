@@ -103,6 +103,7 @@ export function ProductSlider({
                 product.compareAtMinor ? formatPriceFa(product.compareAtMinor) : null
               }
               badge={product.isNew ? "جدید" : product.isBestSeller ? "پرفروش" : null}
+              hasVariants={product.variants.length > 0}
               priority={index === 0}
             />
           </li>

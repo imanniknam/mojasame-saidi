@@ -120,16 +120,36 @@ export async function createStoreOrder(input: CreateOrderInput) {
   const productMap = new Map(products.map((product) => [product.id, product]));
   const variantMap = new Map(variants.map((v) => [v.id, v]));
 
-  const pricedLines = input.lines.map((line) => {
-    const product = productMap.get(line.productId);
+  /**
+   * موجودی به‌ازای هر **محصول** سنجیده می‌شود، نه هر خط.
+   *
+   * سبد می‌تواند چند خط از یک محصول داشته باشد (سایزهای مختلف، یا خطی که
+   * جداگانه اضافه شده). قبلاً هر خط مستقل با کل موجودی مقایسه می‌شد، پس دو
+   * خط ۳تایی از محصولی با موجودی ۴ هر دو قبول می‌شدند و ۶ عدد فروخته می‌شد.
+   */
+  const quantityByProduct = new Map<string, number>();
+  for (const line of input.lines) {
+    quantityByProduct.set(
+      line.productId,
+      (quantityByProduct.get(line.productId) ?? 0) + line.quantity,
+    );
+  }
+
+  for (const [productId, quantity] of quantityByProduct) {
+    const product = productMap.get(productId);
     if (!product) throw new Error("PRODUCT_NOT_FOUND");
 
     const available =
       (product.inventory?.quantityOnHand ?? 0) -
       (product.inventory?.quantityReserved ?? 0);
-    if (available < line.quantity) {
+    if (available < quantity) {
       throw new Error("INSUFFICIENT_STOCK");
     }
+  }
+
+  const pricedLines = input.lines.map((line) => {
+    const product = productMap.get(line.productId);
+    if (!product) throw new Error("PRODUCT_NOT_FOUND");
 
     let unitPriceMinor = product.priceMinor;
     let variantNameFaSnap: string | undefined;
@@ -197,15 +217,20 @@ export async function createStoreOrder(input: CreateOrderInput) {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
       const order = await prisma.$transaction(async (tx) => {
-        for (const line of pricedLines) {
-          const updated = await tx.inventory.updateMany({
-            where: {
-              productId: line.productId,
-              quantityOnHand: { gte: line.quantity },
-            },
-            data: { quantityOnHand: { decrement: line.quantity } },
-          });
-          if (updated.count === 0) {
+        for (const [productId, quantity] of quantityByProduct) {
+          /**
+           * شرط اتمیک باید همان تعریفِ «موجودِ قابل فروش» را داشته باشد که
+           * بالاتر بررسی شد: onHand منهای reserved. با `updateMany` نمی‌شود دو
+           * ستون را با هم مقایسه کرد، پس اینجا SQL خام است. قبلاً فقط onHand
+           * سنجیده می‌شد و اقلام رزروشده هم فروخته می‌شدند.
+           */
+          const updated = await tx.$executeRaw`
+            UPDATE "Inventory"
+            SET "quantityOnHand" = "quantityOnHand" - ${quantity}
+            WHERE "productId" = ${productId}
+              AND "quantityOnHand" - "quantityReserved" >= ${quantity}
+          `;
+          if (updated === 0) {
             throw new Error("INSUFFICIENT_STOCK");
           }
         }

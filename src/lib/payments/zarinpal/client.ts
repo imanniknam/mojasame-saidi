@@ -129,21 +129,44 @@ export async function zarinpalVerifyPayment(input: {
     }),
   });
 
-  const json = (await response.json()) as ZarinpalApiEnvelope<VerifyPaymentData>;
+  const json = (await response.json()) as ZarinpalApiEnvelope<VerifyPaymentData | never[]>;
 
-  if (!response.ok || json.errors?.length) {
-    const message = json.errors?.[0]?.message ?? `Zarinpal verify HTTP ${response.status}`;
-    throw new Error(message);
+  /**
+   * پاسخ خطای زرین‌پال «شکستِ تأیید» است، نه خرابیِ سرویس.
+   *
+   * قبلاً اینجا throw می‌شد و صدازننده هم آن را مهار نمی‌کرد، پس رکورد
+   * Payment برای همیشه در وضعیت PENDING می‌ماند و هیچ‌وقت FAILED نمی‌شد —
+   * سفارش عملاً بلاتکلیف رها می‌شد. حالا نتیجه‌ی ناموفق برمی‌گردانیم تا
+   * صدازننده وضعیت را درست ثبت کند. فقط پاسخ غیرقابل‌تفسیر (HTTP خراب بدون
+   * بدنه‌ی خطا) استثنا محسوب می‌شود.
+   */
+  const failure = json.errors?.[0];
+  if (failure) {
+    return {
+      success: false as const,
+      code: failure.code,
+      message: failure.message,
+      refId: null,
+      cardPanMasked: null,
+      raw: json,
+    };
   }
 
-  const success = json.data.code === 100 || json.data.code === 101;
+  const data = Array.isArray(json.data) ? null : json.data;
+  if (!data) {
+    if (!response.ok) throw new Error(`Zarinpal verify HTTP ${response.status}`);
+    throw new Error("Zarinpal verify returned no data");
+  }
+
+  // ۱۰۰ = تأیید شد، ۱۰۱ = قبلاً تأیید شده بود (بازگشت دوباره‌ی کاربر)
+  const success = data.code === 100 || data.code === 101;
 
   return {
     success,
-    code: json.data.code,
-    message: json.data.message,
-    refId: json.data.ref_id,
-    cardPanMasked: json.data.card_pan ?? null,
+    code: data.code,
+    message: data.message,
+    refId: data.ref_id,
+    cardPanMasked: data.card_pan ?? null,
     raw: json,
   };
 }

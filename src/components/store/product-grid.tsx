@@ -38,6 +38,7 @@ export function ProductGrid({
             product.compareAtMinor ? formatPriceFa(product.compareAtMinor) : null
           }
           badge={product.isNew ? "جدید" : product.isBestSeller ? "پرفروش" : null}
+          hasVariants={product.variants.length > 0}
           priority={prioritizeFirst && index === 0}
         />
       ))}

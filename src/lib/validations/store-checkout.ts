@@ -7,6 +7,20 @@ const phoneSchema = z
   .transform((value) => normalizeDigits(value).replace(/[^\d]/g, ""))
   .pipe(z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست."));
 
+/**
+ * کد پستی هم مثل شماره موبایل نرمال می‌شود.
+ *
+ * قبلاً سرور روی رشته‌ی خام `min(10).max(10)` می‌زد، ولی فرم کلاینت پیش از
+ * اعتبارسنجی ارقام فارسی را لاتین و جداکننده‌ها را حذف می‌کند. نتیجه این بود
+ * که «۱۲۳۴۵-۶۷۸۹۰» از نظر کاربر درست بود، فرم قبولش می‌کرد، و سرور همان
+ * سفارش را با ۴۲۲ رد می‌کرد.
+ */
+const postalCodeSchema = z
+  .string({ required_error: "کد پستی را وارد کنید." })
+  .trim()
+  .transform((value) => normalizeDigits(value).replace(/[^\d]/g, ""))
+  .pipe(z.string().regex(/^\d{10}$/, "کد پستی باید ۱۰ رقم باشد."));
+
 export const storeCheckoutSchema = z.object({
   lines: z
     .array(
@@ -39,7 +53,7 @@ export const storeCheckoutSchema = z.object({
     phone: phoneSchema,
     province: z.string().trim().min(2, "استان را وارد کنید."),
     city: z.string().trim().min(2, "شهر را وارد کنید."),
-    postalCode: z.string().trim().min(10, "کد پستی الزامی و ۱۰ رقمی است.").max(10, "کد پستی باید ۱۰ رقم باشد."),
+    postalCode: postalCodeSchema,
     addressLine: z.string().trim().min(8, "آدرس را دقیق‌تر وارد کنید."),
     notes: z.string().trim().optional(),
   }),
