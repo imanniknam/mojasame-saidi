@@ -21,7 +21,9 @@
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm run db:validate",
     "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy/deploy.ps1",
-    "deploy:package": "powershell -ExecutionPolicy Bypass -File scripts/deploy/deploy-package.ps1"
+    "deploy:package": "powershell -ExecutionPolicy Bypass -File scripts/deploy/deploy-package.ps1",
+    "db:migrate-to-vps": "powershell -ExecutionPolicy Bypass -File scripts/deploy/migrate-db.ps1",
+    "db:export": "node --env-file=.env.local scripts/db-export.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

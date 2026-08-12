@@ -42,3 +42,6 @@ prisma/migrations/**/migration_lock.toml
 
 # کش افزایشی tsc — آرتیفکت بیلد است
 tsconfig.tsbuildinfo
+
+# صادرات دیتابیس — شامل داده‌ی شخصی مشتری است
+db-export*.json
