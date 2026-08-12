@@ -28,6 +28,25 @@ from outside rather than trusting the server's own report.
 Flags: `npm run deploy -- -WithBackup` also copies the app directory on the
 server first; `-SkipChecks` skips the local typecheck and lint.
 
+### When the server cannot reach GitHub
+
+`git fetch` on this VPS intermittently fails with `SSL connection timeout`.
+When that happens, ship the source over SSH instead:
+
+```bash
+npm run deploy:package
+```
+
+It packs the working tree (~1 MB), `scp`s it up, and runs
+`release-tarball.sh` there. `node_modules`, `.next` and every `.env*` file
+are excluded, so server config and installed dependencies are untouched.
+Dependencies are reinstalled only when `package-lock.json` changed, and
+migrations run only when `schema.prisma` changed.
+
+The build still happens **on the server**. Do not ship a Windows-built
+`.next`: Next records absolute paths and `\` separators in its manifests, so
+that output is not valid on Linux.
+
 The equivalent by hand:
 
 ```bash
