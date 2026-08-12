@@ -1,0 +1,29 @@
+[Unit]
+Description=MojasameSaidi.ir — Next.js storefront
+After=network.target
+
+[Service]
+Type=simple
+User=mojasame
+Group=mojasame
+WorkingDirectory=/srv/mojasame
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+# سخت‌سازی — برنامه فقط به پوشه‌ی آپلود اجازه‌ی نوشتن دارد
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mojasame/uploads /srv/mojasame/.next
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mojasame
+
+[Install]
+WantedBy=multi-user.target
