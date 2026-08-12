@@ -17,10 +17,20 @@ export {
 };
 export type { SessionRole, SessionUser } from "@/lib/auth/session-token";
 
-export async function getSessionUserFromRequest(_request?: Request | NextRequest) {
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  return verifySessionToken(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+function readRequestCookie(request: Request | NextRequest, name: string) {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return undefined;
+
+  for (const part of cookieHeader.split(";")) {
+    const [rawName, ...rawValue] = part.trim().split("=");
+    if (rawName === name) return rawValue.join("=");
+  }
+
+  return undefined;
+}
+
+export async function getSessionUserFromRequest(request: Request | NextRequest) {
+  return verifySessionToken(readRequestCookie(request, SESSION_COOKIE_NAME));
 }
 
 export async function getSessionUser() {

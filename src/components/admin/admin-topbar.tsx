@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export type AdminTopbarProps = {
   userLabel?: string;
@@ -103,13 +104,14 @@ export function AdminTopbar({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link
-              href="/admin/logout"
-              className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+            <LogoutButton
+              action="/admin/logout"
+              next="/admin/login"
+              className="flex w-full cursor-pointer items-center gap-2 text-start text-destructive focus:text-destructive"
             >
               <LogOut className="size-4" aria-hidden />
               خروج از حساب
-            </Link>
+            </LogoutButton>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

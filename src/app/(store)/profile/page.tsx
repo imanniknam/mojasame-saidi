@@ -18,7 +18,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default async function ProfilePage() {
   const sessionUser = await getActiveSessionUser();
-  if (!sessionUser) redirect("/login");
+  if (!sessionUser) redirect("/login?next=/profile");
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
@@ -37,7 +37,7 @@ export default async function ProfilePage() {
     },
   });
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/profile");
 
   const customer = user.customer;
   const fullName =

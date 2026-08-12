@@ -21,7 +21,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default async function OrdersPage() {
   const sessionUser = await getActiveSessionUser();
-  if (!sessionUser || !sessionUser.customerId) redirect("/login");
+  if (!sessionUser || !sessionUser.customerId) redirect("/login?next=/orders");
 
   const orders = await prisma.order.findMany({
     where: { customerId: sessionUser.customerId },

@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { useNavigation } from "@/components/layout/navigation-context";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 const NAV_LINKS = [
   { href: "/", label: "صفحه اصلی" },
@@ -168,30 +169,43 @@ export function SiteHeader({
                   {user ? (
                     <>
                       <p className="mb-1 px-2 text-xs font-semibold text-primary">{user.name}</p>
-                      <Link
-                        href={user.role === "ADMIN" ? "/admin" : "/profile"}
-                        onClick={() => setMenuOpen(false)}
-                        className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
-                      >
-                        <UserRound className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
-                        {user.role === "ADMIN" ? "پنل مدیریت" : "حساب کاربری"}
-                      </Link>
-                      <Link
-                        href="/orders"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
-                      >
-                        <Package className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
-                        سفارش‌های من
-                      </Link>
-                      <Link
-                        href="/logout"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
+                      {user.role === "ADMIN" ? (
+                        <Link
+                          href="/admin"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
+                        >
+                          <UserRound className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
+                          پنل مدیریت
+                        </Link>
+                      ) : (
+                        <>
+                          {/* ناوبری کامل، تا redirect مهمانِ ذخیره‌شده در Router Cache دور زده شود. */}
+                          <a
+                            href="/profile"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
+                          >
+                            <UserRound className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
+                            حساب کاربری
+                          </a>
+                          <a
+                            href="/orders"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex min-h-touch items-center gap-3 px-2 text-[0.9375rem] text-foreground transition-colors hover:text-primary"
+                          >
+                            <Package className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
+                            سفارش‌های من
+                          </a>
+                        </>
+                      )}
+                      <LogoutButton
+                        onLoggedOut={() => setMenuOpen(false)}
+                        className="flex min-h-touch w-full items-center gap-3 px-2 text-start text-[0.9375rem] text-foreground transition-colors hover:text-primary"
                       >
                         <LogOut className="size-[1.15rem] stroke-[1.6] text-muted-foreground" aria-hidden />
                         خروج
-                      </Link>
+                      </LogoutButton>
                     </>
                   ) : (
                     <Button variant="luxury" size="touch" className="w-full" asChild>
@@ -319,16 +333,16 @@ export function SiteHeader({
                 ) : (
                   <>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile">پروفایل</Link>
+                      <a href="/profile">پروفایل</a>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orders">سفارش‌ها</Link>
+                      <a href="/orders">سفارش‌ها</a>
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/logout">خروج</Link>
+                  <LogoutButton className="w-full text-start">خروج</LogoutButton>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
